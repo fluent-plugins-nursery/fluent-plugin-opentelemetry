@@ -8,6 +8,20 @@ The telemetry data have been provided by js application in `app` directory.
 * metrics.js: OpenTelemetry instrumented application that exports metrics to an endpoint (Fluentd) using the otlp protocol
 * tracing.js: OpenTelemetry instrumented application that exports trace data to an endpoint (Fluentd) using the otlp protocol
 
+### Structure
+
+```mermaid
+flowchart LR
+    A[app/metrics.js] -->|metric data / otlp| C[Fluentd]
+    B[app/tracing.js] -->|trace data / otlp| C[Fluentd]
+    C[Fluentd] -->|metric data / otlp| D[Otel Collector]
+    C[Fluentd] -->|trace data / otlp| D[Otel Collector]
+    C[Fluentd] -->|sample log / Fluentd Forward Protocol| D[Otel Collector]
+    D[Otel Collector] -->|metric data| E[Prometheus / Grafana]
+    D[Otel Collector] -->|trace data| F[Jaeger]
+    D[Otel Collector] -->|sample log| G[Elasticsearch / Kibana]
+```
+
 ### Setup
 
 1. Run `docker-compose up -d --build` to start the application
