@@ -7,4 +7,6 @@
 /spec/reports/
 /tmp/
 
+/example/node_modules/
+
 Gemfile.lock
