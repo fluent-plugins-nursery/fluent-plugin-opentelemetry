@@ -45,6 +45,6 @@ This demo uses Elasticsearch / Kibana to visualize the trace data.
 
 ![create data view](./assets/create_data_view.png)
 
-3. Then, go to Discover tab to check the logs. As you can see, logs are properly collected into the Elasticsearch + Kibana, via Fluentd.
+3. Then, go to Discover tab to check the logs. As you can see, logs are properly collected into the Elasticsearch + Kibana.
 
 ![discover logs](./assets/discover_logs.png)
