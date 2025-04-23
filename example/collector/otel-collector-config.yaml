@@ -1,4 +1,6 @@
 receivers:
+  fluentforward:
+    endpoint: 0.0.0.0:24224
   otlp:
     protocols:
       grpc:
@@ -7,6 +9,8 @@ receivers:
         endpoint: 0.0.0.0:4318
 
 exporters:
+  elasticsearch:
+    endpoint: http://elasticsearch:9200
   prometheus:
     endpoint: "0.0.0.0:8889"
   otlp:
@@ -25,5 +29,5 @@ service:
       receivers: [otlp]
       exporters: [debug, prometheus]
     logs:
-      receivers: [otlp]
-      exporters: [debug]
+      receivers: [otlp, fluentforward]
+      exporters: [debug, elasticsearch]

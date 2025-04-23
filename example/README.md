@@ -14,6 +14,8 @@ The telemetry data have been provided by js application in `app` directory.
 
 ### Visualize metrics data
 
+This demo uses Prometheus / Grafana to visualize the metrics data.
+
 1. Go to [`localhost:3000`](http://localhost:3000) and login to Grafana using credentials admin, admin
 
 2. Then, show `demo > Basic Service Trace` in [dashboard](http://localhost:3000/dashboards).
@@ -23,10 +25,26 @@ The telemetry data have been provided by js application in `app` directory.
 
 ### Visualize trace data
 
+This demo uses Jaeger to visualize the trace data.
+
 1. Navigate to [`localhost:16686`](http://localhost:16686/), select the correct service and find traces.
 
 ![find-traces](./assets/find-traces.png)
 
-
 ![trace-data](./assets/trace-data.png)
 
+### Visualize log data
+
+This demo uses Elasticsearch / Kibana to visualize the trace data.
+
+1. Go to [`http://localhost:5601/app/discover#/`](http://localhost:5601/app/discover#/), then click on `Create data view`.
+
+![discover](./assets/discover.png)
+
+2. Specify `logs-*` to Index pattern and click Save data view to Kibana. 
+
+![create data view](./assets/create_data_view.png)
+
+3. Then, go to Discover tab to check the logs. As you can see, logs are properly collected into the Elasticsearch + Kibana, via Fluentd.
+
+![discover logs](./assets/discover_logs.png)
