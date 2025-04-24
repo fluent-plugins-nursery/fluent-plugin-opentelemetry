@@ -179,6 +179,27 @@ class Fluent::Plugin::OtlpOutputTest < Test::Unit::TestCase
       d.instance_shutdown
     end
 
+    def test_unrecoverable_error_400_status_code
+      server_response_code(400)
+      event = { "type" => "otlp_logs", "message" => TestData::JSON::LOGS }
+
+      d = create_driver(%[
+        <http>
+          endpoint "http://127.0.0.1:#{@port}"
+          error_response_as_unrecoverable false
+          retryable_response_codes [400]
+        </http>
+      ])
+      d.run(default_tag: "otlp.test", shutdown: false) do
+        d.feed(event)
+      end
+
+      assert_match(%r{got unrecoverable error response from 'http://127.0.0.1:#{@port}/v1/logs', response code is 400},
+                   d.instance.log.out.logs.join)
+
+      d.instance_shutdown
+    end
+
     def test_error_with_disabled_unrecoverable
       server_response_code(500)
       event = { "type" => "otlp_logs", "message" => TestData::JSON::LOGS }

@@ -110,6 +110,11 @@ module Fluent::Plugin
         response = connection.post
 
         if response.status != 200
+          if response.status == 400
+            # The client MUST NOT retry the request when it receives HTTP 400 Bad Request response.
+            raise Fluent::UnrecoverableError, "got unrecoverable error response from '#{uri}', response code is #{response.status}"
+          end
+
           if @http_config.retryable_response_codes&.include?(response.status)
             raise RetryableResponse, "got retryable error response from '#{uri}', response code is #{response.status}"
           end
