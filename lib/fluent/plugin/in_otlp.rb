@@ -113,7 +113,7 @@ module Fluent::Plugin
 
       private
 
-      def common(req, request_class, response_class, &block)
+      def common(req, request_class, response_class)
         content_type = req.headers["content-type"]
         content_encoding = req.headers["content-encoding"]&.first
         return response_unsupported_media_type unless valid_content_type?(content_type)
@@ -129,7 +129,7 @@ module Fluent::Plugin
           return response_bad_request(content_type)
         end
 
-        block.call(record)
+        yield record
 
         res = response_class.new
         response(200, content_type, res.body(type: Otlp::Response.type(content_type)))
