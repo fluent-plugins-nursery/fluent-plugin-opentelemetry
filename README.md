@@ -91,7 +91,7 @@ This requires to send data via HTTP/HTTPS.
 | endpoint                        | string  | The endpoint for HTTP/HTTPS request                            | `http://127.0.0.1:4318` |
 | proxy                           | string  | The proxy for HTTP/HTTPS request                               | `nil`                   |
 | error_response_as_unrecoverable | bool    | Raise UnrecoverableError when the response code is not SUCCESS | `true`                  |
-| retryable_response_codes        | array   | The list of retryable response codes                           | `nil`                   |
+| retryable_response_codes        | array   | The list of retryable response codes                           | `[429, 502, 503, 504]`  |
 | read_timeout                    | integer | The read timeout in seconds                                    | `60`                    |
 | write_timeout                   | integer | The write timeout in seconds                                   | `60`                    |
 | connect_timeout                 | integer | The connect timeout in seconds                                 | `60`                    |
