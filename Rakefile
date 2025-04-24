@@ -15,6 +15,7 @@ end
 
 task default: :test
 
+desc "Regenerate 'lib/opentelemetry'"
 task :"regenerate:opentelemetry" do
   lib_path = File.expand_path("lib/opentelemetry")
 
