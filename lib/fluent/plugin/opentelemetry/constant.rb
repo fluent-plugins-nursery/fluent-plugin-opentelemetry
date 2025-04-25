@@ -3,7 +3,7 @@
 require "fluent/plugin"
 require "openssl"
 
-module Fluent::Plugin::Otlp
+module Fluent::Plugin::Opentelemetry
   CONTENT_TYPE = "Content-Type"
   CONTENT_TYPE_PAIN = "text/plain"
   CONTENT_TYPE_PROTOBUF = "application/x-protobuf"
@@ -12,9 +12,9 @@ module Fluent::Plugin::Otlp
   CONTENT_ENCODING = "Content-Encoding"
   CONTENT_ENCODING_GZIP = "gzip"
 
-  RECORD_TYPE_LOGS = "otlp_logs"
-  RECORD_TYPE_METRICS = "otlp_metrics"
-  RECORD_TYPE_TRACES = "otlp_traces"
+  RECORD_TYPE_LOGS = "opentelemetry_logs"
+  RECORD_TYPE_METRICS = "opentelemetry_metrics"
+  RECORD_TYPE_TRACES = "opentelemetry_traces"
 
   TLS_VERSIONS_MAP =
     begin

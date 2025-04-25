@@ -2,10 +2,10 @@
 
 require "helper"
 
-require "fluent/plugin/in_otlp"
+require "fluent/plugin/in_opentelemetry"
 require "fluent/test/driver/input"
 
-class Fluent::Plugin::OtlpInputTest < Test::Unit::TestCase
+class Fluent::Plugin::OpentelemetryInputTest < Test::Unit::TestCase
   def setup
     Fluent::Test.setup
 
@@ -23,23 +23,23 @@ class Fluent::Plugin::OtlpInputTest < Test::Unit::TestCase
   end
 
   def create_driver(conf = config)
-    Fluent::Test::Driver::Input.new(Fluent::Plugin::OtlpInput).configure(conf)
+    Fluent::Test::Driver::Input.new(Fluent::Plugin::OpentelemetryInput).configure(conf)
   end
 
   def test_configure
     d = create_driver(%[
-      tag otlp.test
+      tag opentelemetry.test
       <http>
         bind 127.0.0.1
         port #{@port}
       </http>
     ])
-    assert_equal "otlp.test", d.instance.tag
+    assert_equal "opentelemetry.test", d.instance.tag
     assert_equal "127.0.0.1", d.instance.http_config.bind
     assert_equal @port, d.instance.http_config.port
 
     d = create_driver(%[
-      tag otlp.test
+      tag opentelemetry.test
       <grpc>
         bind 127.0.0.1
         port #{@port}
@@ -49,7 +49,7 @@ class Fluent::Plugin::OtlpInputTest < Test::Unit::TestCase
     assert_equal @port, d.instance.grpc_config.port
 
     d = create_driver(%[
-      tag otlp.test
+      tag opentelemetry.test
       <http>
         bind 127.0.0.1
         port #{@port}
@@ -66,7 +66,7 @@ class Fluent::Plugin::OtlpInputTest < Test::Unit::TestCase
 
     assert_raise(Fluent::ConfigError) do
       create_driver(%[
-        tag otlp.test
+        tag opentelemetry.test
       ])
     end
   end
@@ -74,7 +74,7 @@ class Fluent::Plugin::OtlpInputTest < Test::Unit::TestCase
   sub_test_case "HTTP" do
     def config
       <<~"CONFIG"
-        tag otlp.test
+        tag opentelemetry.test
         <http>
           bind 127.0.0.1
           port #{@port}
@@ -85,19 +85,19 @@ class Fluent::Plugin::OtlpInputTest < Test::Unit::TestCase
     data("metrics" => {
            request_path: "/v1/metrics",
            request_data: TestData::JSON::METRICS,
-           record_type: "otlp_metrics",
+           record_type: Fluent::Plugin::Opentelemetry::RECORD_TYPE_METRICS,
            record_data: TestData::JSON::METRICS
          },
          "traces" => {
            request_path: "/v1/traces",
            request_data: TestData::JSON::TRACES,
-           record_type: "otlp_traces",
+           record_type: Fluent::Plugin::Opentelemetry::RECORD_TYPE_TRACES,
            record_data: TestData::JSON::TRACES
          },
          "logs" => {
            request_path: "/v1/logs",
            request_data: TestData::JSON::LOGS,
-           record_type: "otlp_logs",
+           record_type: Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS,
            record_data: TestData::JSON::LOGS
          })
     def test_receive_json(data)
@@ -106,7 +106,7 @@ class Fluent::Plugin::OtlpInputTest < Test::Unit::TestCase
         post_json(data[:request_path], data[:request_data])
       end
 
-      expected_events = [["otlp.test", @event_time, { type: data[:record_type], message: data[:record_data] }]]
+      expected_events = [["opentelemetry.test", @event_time, { type: data[:record_type], message: data[:record_data] }]]
       assert_equal(200, res.status)
       assert_equal(expected_events, d.events)
     end
@@ -117,7 +117,7 @@ class Fluent::Plugin::OtlpInputTest < Test::Unit::TestCase
         post_json("/v1/logs", compress(TestData::JSON::LOGS), headers: { "Content-Encoding" => "gzip" })
       end
 
-      expected_events = [["otlp.test", @event_time, { type: "otlp_logs", message: TestData::JSON::LOGS }]]
+      expected_events = [["opentelemetry.test", @event_time, { type: "opentelemetry_logs", message: TestData::JSON::LOGS }]]
       assert_equal(200, res.status)
       assert_equal(expected_events, d.events)
     end
@@ -134,19 +134,19 @@ class Fluent::Plugin::OtlpInputTest < Test::Unit::TestCase
     data("metrics" => {
            request_path: "/v1/metrics",
            request_data: TestData::ProtocolBuffers::METRICS,
-           record_type: "otlp_metrics",
+           record_type: Fluent::Plugin::Opentelemetry::RECORD_TYPE_METRICS,
            record_data: TestData::JSON::METRICS
          },
          "traces" => {
            request_path: "/v1/traces",
            request_data: TestData::ProtocolBuffers::TRACES,
-           record_type: "otlp_traces",
+           record_type: Fluent::Plugin::Opentelemetry::RECORD_TYPE_TRACES,
            record_data: TestData::JSON::TRACES
          },
          "logs" => {
            request_path: "/v1/logs",
            request_data: TestData::ProtocolBuffers::LOGS,
-           record_type: "otlp_logs",
+           record_type: Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS,
            record_data: TestData::JSON::LOGS
          })
     def test_receive_protocol_buffers(data)
@@ -155,7 +155,7 @@ class Fluent::Plugin::OtlpInputTest < Test::Unit::TestCase
         post_protobuf(data[:request_path], data[:request_data])
       end
 
-      expected_events = [["otlp.test", @event_time, { type: data[:record_type], message: data[:record_data] }]]
+      expected_events = [["opentelemetry.test", @event_time, { type: data[:record_type], message: data[:record_data] }]]
       assert_equal(200, res.status)
       assert_equal(expected_events, d.events)
     end
@@ -166,7 +166,7 @@ class Fluent::Plugin::OtlpInputTest < Test::Unit::TestCase
         post_protobuf("/v1/logs", compress(TestData::ProtocolBuffers::LOGS), headers: { "Content-Encoding" => "gzip" })
       end
 
-      expected_events = [["otlp.test", @event_time, { type: "otlp_logs", message: TestData::JSON::LOGS }]]
+      expected_events = [["opentelemetry.test", @event_time, { type: "opentelemetry_logs", message: TestData::JSON::LOGS }]]
       assert_equal(200, res.status)
       assert_equal(expected_events, d.events)
     end
@@ -202,7 +202,7 @@ class Fluent::Plugin::OtlpInputTest < Test::Unit::TestCase
   sub_test_case "HTTPS" do
     def config
       <<~"CONFIG"
-        tag otlp.test
+        tag opentelemetry.test
         <http>
           bind 127.0.0.1
           port #{@port}
@@ -222,7 +222,7 @@ class Fluent::Plugin::OtlpInputTest < Test::Unit::TestCase
         post_https_json("/v1/logs", TestData::JSON::LOGS)
       end
 
-      expected_events = [["otlp.test", @event_time, { type: "otlp_logs", message: TestData::JSON::LOGS }]]
+      expected_events = [["opentelemetry.test", @event_time, { type: "opentelemetry_logs", message: TestData::JSON::LOGS }]]
       assert_equal(200, res.status)
       assert_equal(expected_events, d.events)
     end
@@ -233,7 +233,7 @@ class Fluent::Plugin::OtlpInputTest < Test::Unit::TestCase
         post_https_protobuf("/v1/logs", TestData::ProtocolBuffers::LOGS)
       end
 
-      expected_events = [["otlp.test", @event_time, { type: "otlp_logs", message: TestData::JSON::LOGS }]]
+      expected_events = [["opentelemetry.test", @event_time, { type: "opentelemetry_logs", message: TestData::JSON::LOGS }]]
       assert_equal(200, res.status)
       assert_equal(expected_events, d.events)
     end

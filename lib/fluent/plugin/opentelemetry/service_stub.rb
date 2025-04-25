@@ -9,7 +9,7 @@ require "opentelemetry/proto/collector/trace/v1/trace_service_services_pb"
 
 require "grpc"
 
-class Fluent::Plugin::Otlp::ServiceStub
+class Fluent::Plugin::Opentelemetry::ServiceStub
   class Logs
     def initialize(host, creds, **kw)
       @stub = Opentelemetry::Proto::Collector::Logs::V1::LogsService::Stub.new(host, creds, **kw)

@@ -1,18 +1,18 @@
 # frozen_string_literal: true
 
-require "fluent/plugin/otlp/constant"
+require "fluent/plugin/opentelemetry/constant"
 require "opentelemetry/proto/collector/logs/v1/logs_service_pb"
 require "opentelemetry/proto/collector/metrics/v1/metrics_service_pb"
 require "opentelemetry/proto/collector/trace/v1/trace_service_pb"
 
 require "google/protobuf"
 
-module Fluent::Plugin::Otlp::Response
+module Fluent::Plugin::Opentelemetry::Response
   def self.type(content_type)
     case content_type
-    when Fluent::Plugin::Otlp::CONTENT_TYPE_PROTOBUF
+    when Fluent::Plugin::Opentelemetry::CONTENT_TYPE_PROTOBUF
       :protobuf
-    when Fluent::Plugin::Otlp::CONTENT_TYPE_JSON
+    when Fluent::Plugin::Opentelemetry::CONTENT_TYPE_JSON
       :json
     else
       raise "unknown content-type: #{content_type}"

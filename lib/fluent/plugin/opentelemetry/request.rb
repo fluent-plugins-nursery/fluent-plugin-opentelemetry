@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-require "fluent/plugin/otlp/constant"
+require "fluent/plugin/opentelemetry/constant"
 require "opentelemetry/proto/collector/logs/v1/logs_service_pb"
 require "opentelemetry/proto/collector/metrics/v1/metrics_service_pb"
 require "opentelemetry/proto/collector/trace/v1/trace_service_pb"
 
 require "google/protobuf"
 
-class Fluent::Plugin::Otlp::Request
+class Fluent::Plugin::Opentelemetry::Request
   class Logs
     def initialize(body)
       @request =

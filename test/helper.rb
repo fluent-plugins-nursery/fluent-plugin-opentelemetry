@@ -2,7 +2,8 @@
 
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 
-require "fluent/plugin/otlp/request"
+require "fluent/plugin/opentelemetry/constant"
+require "fluent/plugin/opentelemetry/request"
 require "fluent/test"
 require "fluent/test/helpers"
 
@@ -26,9 +27,9 @@ module TestData
   end
 
   module ProtocolBuffers
-    METRICS = Fluent::Plugin::Otlp::Request::Metrics.new(TestData::JSON::METRICS).body
-    TRACES = Fluent::Plugin::Otlp::Request::Traces.new(TestData::JSON::TRACES).body
-    LOGS = Fluent::Plugin::Otlp::Request::Logs.new(TestData::JSON::LOGS).body
+    METRICS = Fluent::Plugin::Opentelemetry::Request::Metrics.new(TestData::JSON::METRICS).body
+    TRACES = Fluent::Plugin::Opentelemetry::Request::Traces.new(TestData::JSON::TRACES).body
+    LOGS = Fluent::Plugin::Opentelemetry::Request::Logs.new(TestData::JSON::LOGS).body
 
     INVALID = "invalid"
   end

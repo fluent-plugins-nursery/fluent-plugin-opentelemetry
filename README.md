@@ -1,4 +1,4 @@
-# Fluent::Plugin::Otlp
+# fluent-plugin-opentelemetry
 
 [Fluentd](https://fluentd.org/) input/output plugin to forward [OpenTelemetry Protocol](https://github.com/open-telemetry/opentelemetry-proto) data.
 
@@ -7,13 +7,13 @@
 ### RubyGems
 
 ```sh
-gem install fluent-plugin-otlp
+gem install fluent-plugin-opentelemetry
 ```
 
 ### Bundler
 
 ```ruby
-gem "fluent-plugin-otlp"
+gem "fluent-plugin-opentelemetry"
 ```
 
 And then execute:
@@ -63,8 +63,8 @@ Refer [Config: Transport Section](https://docs.fluentd.org/configuration/transpo
 
 ```
 <source>
-  @type otlp
-  tag otlp
+  @type opentelemetry
+  tag opentelemetry
 
   <http>
     bind 0.0.0.0
@@ -137,8 +137,8 @@ Refer [Config: Buffer Section](https://docs.fluentd.org/configuration/buffer-sec
 #### Example
 
 ```
-<match otlp.**>
-  @type otlp
+<match opentelemetry.**>
+  @type opentelemetry
 
   <http>
     endpoint "https://127.0.0.1:4318"

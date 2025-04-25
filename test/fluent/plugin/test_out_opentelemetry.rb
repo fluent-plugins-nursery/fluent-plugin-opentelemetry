@@ -2,13 +2,13 @@
 
 require "helper"
 
-require "fluent/plugin/out_otlp"
+require "fluent/plugin/out_opentelemetry"
 require "fluent/test/driver/output"
 
 require "webrick"
 require "webrick/https"
 
-class Fluent::Plugin::OtlpOutputTest < Test::Unit::TestCase
+class Fluent::Plugin::OpentelemetryOutputTest < Test::Unit::TestCase
   ServerRequest = Struct.new(:request_method, :path, :header, :body)
 
   DEFAULT_LOGGER = ::WEBrick::Log.new($stdout, ::WEBrick::BasicLog::FATAL)
@@ -70,7 +70,7 @@ class Fluent::Plugin::OtlpOutputTest < Test::Unit::TestCase
   end
 
   def create_driver(conf = config)
-    Fluent::Test::Driver::Output.new(Fluent::Plugin::OtlpOutput).configure(conf)
+    Fluent::Test::Driver::Output.new(Fluent::Plugin::OpentelemetryOutput).configure(conf)
   end
 
   def test_configure
@@ -103,10 +103,10 @@ class Fluent::Plugin::OtlpOutputTest < Test::Unit::TestCase
     end
 
     def test_send_logs
-      event = { "type" => "otlp_logs", "message" => TestData::JSON::LOGS }
+      event = { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS, "message" => TestData::JSON::LOGS }
 
       d = create_driver
-      d.run(default_tag: "otlp.test") do
+      d.run(default_tag: "opentelemetry.test") do
         d.feed(event)
       end
 
@@ -117,10 +117,10 @@ class Fluent::Plugin::OtlpOutputTest < Test::Unit::TestCase
     end
 
     def test_send_metrics
-      event = { "type" => "otlp_metrics", "message" => TestData::JSON::METRICS }
+      event = { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_METRICS, "message" => TestData::JSON::METRICS }
 
       d = create_driver
-      d.run(default_tag: "otlp.test") do
+      d.run(default_tag: "opentelemetry.test") do
         d.feed(event)
       end
 
@@ -131,10 +131,10 @@ class Fluent::Plugin::OtlpOutputTest < Test::Unit::TestCase
     end
 
     def test_send_traces
-      event = { "type" => "otlp_traces", "message" => TestData::JSON::TRACES }
+      event = { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_TRACES, "message" => TestData::JSON::TRACES }
 
       d = create_driver
-      d.run(default_tag: "otlp.test") do
+      d.run(default_tag: "opentelemetry.test") do
         d.feed(event)
       end
 
@@ -145,7 +145,7 @@ class Fluent::Plugin::OtlpOutputTest < Test::Unit::TestCase
     end
 
     def test_send_compressed_message
-      event = { "type" => "otlp_logs", "message" => TestData::JSON::LOGS }
+      event = { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS, "message" => TestData::JSON::LOGS }
 
       d = create_driver(%[
         <http>
@@ -153,7 +153,7 @@ class Fluent::Plugin::OtlpOutputTest < Test::Unit::TestCase
           compress gzip
         </http>
       ])
-      d.run(default_tag: "otlp.test") do
+      d.run(default_tag: "opentelemetry.test") do
         d.feed(event)
       end
 
@@ -166,10 +166,10 @@ class Fluent::Plugin::OtlpOutputTest < Test::Unit::TestCase
 
     def test_unrecoverable_error
       server_response_code(500)
-      event = { "type" => "otlp_logs", "message" => TestData::JSON::LOGS }
+      event = { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS, "message" => TestData::JSON::LOGS }
 
       d = create_driver
-      d.run(default_tag: "otlp.test", shutdown: false) do
+      d.run(default_tag: "opentelemetry.test", shutdown: false) do
         d.feed(event)
       end
 
@@ -181,7 +181,7 @@ class Fluent::Plugin::OtlpOutputTest < Test::Unit::TestCase
 
     def test_unrecoverable_error_400_status_code
       server_response_code(400)
-      event = { "type" => "otlp_logs", "message" => TestData::JSON::LOGS }
+      event = { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS, "message" => TestData::JSON::LOGS }
 
       d = create_driver(%[
         <http>
@@ -190,7 +190,7 @@ class Fluent::Plugin::OtlpOutputTest < Test::Unit::TestCase
           retryable_response_codes [400]
         </http>
       ])
-      d.run(default_tag: "otlp.test", shutdown: false) do
+      d.run(default_tag: "opentelemetry.test", shutdown: false) do
         d.feed(event)
       end
 
@@ -202,7 +202,7 @@ class Fluent::Plugin::OtlpOutputTest < Test::Unit::TestCase
 
     def test_error_with_disabled_unrecoverable
       server_response_code(500)
-      event = { "type" => "otlp_logs", "message" => TestData::JSON::LOGS }
+      event = { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS, "message" => TestData::JSON::LOGS }
 
       d = create_driver(%[
         <http>
@@ -210,7 +210,7 @@ class Fluent::Plugin::OtlpOutputTest < Test::Unit::TestCase
           error_response_as_unrecoverable false
         </http>
       ])
-      d.run(default_tag: "otlp.test", shutdown: false) do
+      d.run(default_tag: "opentelemetry.test", shutdown: false) do
         d.feed(event)
       end
 
@@ -225,7 +225,7 @@ class Fluent::Plugin::OtlpOutputTest < Test::Unit::TestCase
       Thread.report_on_exception = false # thread finished as invalid state since RetryableResponse raises.
 
       server_response_code(503)
-      event = { "type" => "otlp_logs", "message" => TestData::JSON::LOGS }
+      event = { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS, "message" => TestData::JSON::LOGS }
 
       d = create_driver(%[
         <http>
@@ -234,8 +234,8 @@ class Fluent::Plugin::OtlpOutputTest < Test::Unit::TestCase
         </http>
       ])
 
-      assert_raise(Fluent::Plugin::OtlpOutput::RetryableResponse) do
-        d.run(default_tag: "otlp.test", shutdown: false) do
+      assert_raise(Fluent::Plugin::OpentelemetryOutput::RetryableResponse) do
+        d.run(default_tag: "opentelemetry.test", shutdown: false) do
           d.feed(event)
         end
       end
@@ -270,10 +270,10 @@ class Fluent::Plugin::OtlpOutputTest < Test::Unit::TestCase
     end
 
     def test_https_send_logs
-      event = { "type" => "otlp_logs", "message" => TestData::JSON::LOGS }
+      event = { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS, "message" => TestData::JSON::LOGS }
 
       d = create_driver
-      d.run(default_tag: "otlp.test") do
+      d.run(default_tag: "opentelemetry.test") do
         d.feed(event)
       end
 

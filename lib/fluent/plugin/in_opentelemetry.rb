@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 require "fluent/plugin/input"
-require "fluent/plugin/otlp/constant"
-require "fluent/plugin/otlp/request"
-require "fluent/plugin/otlp/response"
-require "fluent/plugin/otlp/service_handler"
+require "fluent/plugin/opentelemetry/constant"
+require "fluent/plugin/opentelemetry/request"
+require "fluent/plugin/opentelemetry/response"
+require "fluent/plugin/opentelemetry/service_handler"
 require "fluent/plugin_helper/http_server"
 require "fluent/plugin_helper/thread"
 
@@ -28,8 +28,8 @@ unless Fluent::PluginHelper::HttpServer::Request.method_defined?(:headers)
 end
 
 module Fluent::Plugin
-  class OtlpInput < Input
-    Fluent::Plugin.register_input("otlp", self)
+  class OpentelemetryInput < Input
+    Fluent::Plugin.register_input("opentelemetry", self)
 
     helpers :thread, :http_server
 
@@ -67,31 +67,31 @@ module Fluent::Plugin
 
       if @http_config
         http_handler = HttpHandler.new
-        http_server_create_http_server(:in_otlp_http_server, addr: @http_config.bind, port: @http_config.port, logger: log) do |serv|
+        http_server_create_http_server(:in_opentelemetry_http_server, addr: @http_config.bind, port: @http_config.port, logger: log) do |serv|
           serv.post("/v1/logs") do |req|
-            http_handler.logs(req) { |record| router.emit(@tag, Fluent::EventTime.now, { type: Otlp::RECORD_TYPE_LOGS, message: record }) }
+            http_handler.logs(req) { |record| router.emit(@tag, Fluent::EventTime.now, { type: Opentelemetry::RECORD_TYPE_LOGS, message: record }) }
           end
           serv.post("/v1/metrics") do |req|
-            http_handler.metrics(req) { |record| router.emit(@tag, Fluent::EventTime.now, { type: Otlp::RECORD_TYPE_METRICS, message: record }) }
+            http_handler.metrics(req) { |record| router.emit(@tag, Fluent::EventTime.now, { type: Opentelemetry::RECORD_TYPE_METRICS, message: record }) }
           end
           serv.post("/v1/traces") do |req|
-            http_handler.traces(req) { |record| router.emit(@tag, Fluent::EventTime.now, { type: Otlp::RECORD_TYPE_TRACES, message: record }) }
+            http_handler.traces(req) { |record| router.emit(@tag, Fluent::EventTime.now, { type: Opentelemetry::RECORD_TYPE_TRACES, message: record }) }
           end
         end
       end
 
       if @grpc_config
-        thread_create(:in_otlp_grpc_server) do
+        thread_create(:in_opentelemetry_grpc_server) do
           grpc_handler = GrpcHandler.new(@grpc_config, log)
           grpc_handler.run(
             logs: lambda { |record|
-              router.emit(@tag, Fluent::EventTime.now, { type: Otlp::RECORD_TYPE_LOGS, message: record })
+              router.emit(@tag, Fluent::EventTime.now, { type: Opentelemetry::RECORD_TYPE_LOGS, message: record })
             },
             metrics: lambda { |record|
-              router.emit(@tag, Fluent::EventTime.now, { type: Otlp::RECORD_TYPE_METRICS, message: record })
+              router.emit(@tag, Fluent::EventTime.now, { type: Opentelemetry::RECORD_TYPE_METRICS, message: record })
             },
             traces: lambda { |record|
-              router.emit(@tag, Fluent::EventTime.now, { type: Otlp::RECORD_TYPE_TRACES, message: record })
+              router.emit(@tag, Fluent::EventTime.now, { type: Opentelemetry::RECORD_TYPE_TRACES, message: record })
             }
           )
         end
@@ -100,15 +100,15 @@ module Fluent::Plugin
 
     class HttpHandler
       def logs(req, &block)
-        common(req, Otlp::Request::Logs, Otlp::Response::Logs, &block)
+        common(req, Opentelemetry::Request::Logs, Opentelemetry::Response::Logs, &block)
       end
 
       def metrics(req, &block)
-        common(req, Otlp::Request::Metrics, Otlp::Response::Metrics, &block)
+        common(req, Opentelemetry::Request::Metrics, Opentelemetry::Response::Metrics, &block)
       end
 
       def traces(req, &block)
-        common(req, Otlp::Request::Traces, Otlp::Response::Traces, &block)
+        common(req, Opentelemetry::Request::Traces, Opentelemetry::Response::Traces, &block)
       end
 
       private
@@ -120,7 +120,7 @@ module Fluent::Plugin
         return response_bad_request(content_type) unless valid_content_encoding?(content_encoding)
 
         body = req.body
-        body = Zlib::GzipReader.new(StringIO.new(body)).read if content_encoding == Otlp::CONTENT_ENCODING_GZIP
+        body = Zlib::GzipReader.new(StringIO.new(body)).read if content_encoding == Opentelemetry::CONTENT_ENCODING_GZIP
 
         begin
           record = request_class.new(body).record
@@ -132,12 +132,12 @@ module Fluent::Plugin
         yield record
 
         res = response_class.new
-        response(200, content_type, res.body(type: Otlp::Response.type(content_type)))
+        response(200, content_type, res.body(type: Opentelemetry::Response.type(content_type)))
       end
 
       def valid_content_type?(content_type)
         case content_type
-        when Otlp::CONTENT_TYPE_PROTOBUF, Otlp::CONTENT_TYPE_JSON
+        when Opentelemetry::CONTENT_TYPE_PROTOBUF, Opentelemetry::CONTENT_TYPE_JSON
           true
         else
           false
@@ -147,15 +147,15 @@ module Fluent::Plugin
       def valid_content_encoding?(content_encoding)
         return true if content_encoding.nil?
 
-        content_encoding == Otlp::CONTENT_ENCODING_GZIP
+        content_encoding == Opentelemetry::CONTENT_ENCODING_GZIP
       end
 
       def response(code, content_type, body)
-        [code, { Otlp::CONTENT_TYPE => content_type }, body]
+        [code, { Opentelemetry::CONTENT_TYPE => content_type }, body]
       end
 
       def response_unsupported_media_type
-        response(415, Otlp::CONTENT_TYPE_PAIN, "415 unsupported media type, supported: [application/json, application/x-protobuf]")
+        response(415, Opentelemetry::CONTENT_TYPE_PAIN, "415 unsupported media type, supported: [application/json, application/x-protobuf]")
       end
 
       def response_bad_request(content_type)
@@ -183,24 +183,24 @@ module Fluent::Plugin
         server = GRPC::RpcServer.new(interceptors: [ExceptionInterceptor.new])
         server.add_http2_port("#{@grpc_config.bind}:#{@grpc_config.port}", :this_port_is_insecure)
 
-        logs_handler = Otlp::ServiceHandler::Logs.new
+        logs_handler = Opentelemetry::ServiceHandler::Logs.new
         logs_handler.callback = lambda { |request|
           logs.call(request.to_json)
-          Otlp::Response::Logs.build
+          Opentelemetry::Response::Logs.build
         }
         server.handle(logs_handler)
 
-        metrics_handler = Otlp::ServiceHandler::Metrics.new
+        metrics_handler = Opentelemetry::ServiceHandler::Metrics.new
         metrics_handler.callback = lambda { |request|
           metrics.call(request.to_json)
-          Otlp::Response::Metrics.build
+          Opentelemetry::Response::Metrics.build
         }
         server.handle(metrics_handler)
 
-        traces_handler = Otlp::ServiceHandler::Traces.new
+        traces_handler = Opentelemetry::ServiceHandler::Traces.new
         traces_handler.callback = lambda { |request|
           traces.call(request.to_json)
-          Otlp::Response::Traces.build
+          Opentelemetry::Response::Traces.build
         }
         server.handle(traces_handler)
 

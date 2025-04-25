@@ -1,19 +1,19 @@
 # frozen_string_literal: true
 
 Gem::Specification.new do |spec|
-  spec.name = "fluent-plugin-otlp"
+  spec.name = "fluent-plugin-opentelemetry"
   spec.version = "0.1.0"
   spec.authors = ["Shizuo Fujita"]
   spec.email = ["fujita@clear-code.com"]
 
   spec.summary = "Fluentd input/output plugin to forward OpenTelemetry Protocol data."
   spec.description = "Fluentd input/output plugin to forward OpenTelemetry Protocol data."
-  spec.homepage = "https://github.com/fluent-plugins-nursery/fluent-plugin-otlp"
+  spec.homepage = "https://github.com/fluent-plugins-nursery/fluent-plugin-opentelemetry"
   spec.license = "Apache-2.0"
   spec.required_ruby_version = ">= 3.2.0"
 
   spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = "https://github.com/fluent-plugins-nursery/fluent-plugin-otlp"
+  spec.metadata["source_code_uri"] = "https://github.com/fluent-plugins-nursery/fluent-plugin-opentelemetry"
   spec.metadata["rubygems_mfa_required"] = "true"
 
   # Specify which files should be added to the gem when it is released.

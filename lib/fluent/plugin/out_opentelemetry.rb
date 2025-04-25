@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "fluent/plugin/otlp/constant"
-require "fluent/plugin/otlp/request"
-require "fluent/plugin/otlp/service_stub"
+require "fluent/plugin/opentelemetry/constant"
+require "fluent/plugin/opentelemetry/request"
+require "fluent/plugin/opentelemetry/service_stub"
 require "fluent/plugin/output"
 
 require "excon"
@@ -12,10 +12,10 @@ require "stringio"
 require "zlib"
 
 module Fluent::Plugin
-  class OtlpOutput < Output
+  class OpentelemetryOutput < Output
     class RetryableResponse < StandardError; end
 
-    Fluent::Plugin.register_output("otlp", self)
+    Fluent::Plugin.register_output("opentelemetry", self)
 
     helpers :server
 
@@ -94,8 +94,8 @@ module Fluent::Plugin
           @tls_settings[:client_cert] = @transport_config.cert_path
           @tls_settings[:client_key] = @transport_config.private_key_path
           @tls_settings[:client_key_pass] = @transport_config.private_key_passphrase
-          @tls_settings[:ssl_min_version] = Otlp::TLS_VERSIONS_MAP[@transport_config.min_version]
-          @tls_settings[:ssl_max_version] = Otlp::TLS_VERSIONS_MAP[@transport_config.max_version]
+          @tls_settings[:ssl_min_version] = Opentelemetry::TLS_VERSIONS_MAP[@transport_config.min_version]
+          @tls_settings[:ssl_max_version] = Opentelemetry::TLS_VERSIONS_MAP[@transport_config.max_version]
         end
 
         @timeout_settings = {
@@ -145,24 +145,24 @@ module Fluent::Plugin
 
         begin
           case record["type"]
-          when Otlp::RECORD_TYPE_LOGS
+          when Opentelemetry::RECORD_TYPE_LOGS
             uri = http_logs_endpoint
-            body = Otlp::Request::Logs.new(msg).body
-          when Otlp::RECORD_TYPE_METRICS
+            body = Opentelemetry::Request::Logs.new(msg).body
+          when Opentelemetry::RECORD_TYPE_METRICS
             uri = http_metrics_endpoint
-            body = Otlp::Request::Metrics.new(msg).body
-          when Otlp::RECORD_TYPE_TRACES
+            body = Opentelemetry::Request::Metrics.new(msg).body
+          when Opentelemetry::RECORD_TYPE_TRACES
             uri = http_traces_endpoint
-            body = Otlp::Request::Traces.new(msg).body
+            body = Opentelemetry::Request::Traces.new(msg).body
           end
         rescue Google::Protobuf::ParseError => e
           # The message format does not comply with the OpenTelemetry protocol.
           raise ::Fluent::UnrecoverableError, e.message
         end
 
-        headers = { Otlp::CONTENT_TYPE => Otlp::CONTENT_TYPE_PROTOBUF }
+        headers = { Opentelemetry::CONTENT_TYPE => Opentelemetry::CONTENT_TYPE_PROTOBUF }
         if @http_config.compress == :gzip
-          headers[Otlp::CONTENT_ENCODING] = Otlp::CONTENT_ENCODING_GZIP
+          headers[Opentelemetry::CONTENT_ENCODING] = Opentelemetry::CONTENT_ENCODING_GZIP
           gz = Zlib::GzipWriter.new(StringIO.new)
           gz << body
           body = gz.close.string
@@ -187,12 +187,12 @@ module Fluent::Plugin
         credential = :this_channel_is_insecure
 
         case record["type"]
-        when Otlp::RECORD_TYPE_LOGS
-          service = Otlp::ServiceStub::Logs.new(@grpc_config.endpoint, credential)
-        when Otlp::RECORD_TYPE_METRICS
-          service = Otlp::ServiceStub::Metrics.new(@grpc_config.endpoint, credential)
-        when Otlp::RECORD_TYPE_TRACES
-          service = Otlp::ServiceStub::Traces.new(@grpc_config.endpoint, credential)
+        when Opentelemetry::RECORD_TYPE_LOGS
+          service = Opentelemetry::ServiceStub::Logs.new(@grpc_config.endpoint, credential)
+        when Opentelemetry::RECORD_TYPE_METRICS
+          service = Opentelemetry::ServiceStub::Metrics.new(@grpc_config.endpoint, credential)
+        when Opentelemetry::RECORD_TYPE_TRACES
+          service = Opentelemetry::ServiceStub::Traces.new(@grpc_config.endpoint, credential)
         end
 
         begin

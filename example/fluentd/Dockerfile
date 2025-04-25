@@ -7,7 +7,7 @@ RUN apt-get update && \
     make \
     gcc \
     git
-RUN git clone https://github.com/fluent-plugins-nursery/fluent-plugin-otlp.git && \
-    cd fluent-plugin-otlp && \
-    gem build fluent-plugin-otlp.gemspec && \
-    gem install fluent-plugin-otlp-*.gem
+RUN git clone https://github.com/fluent-plugins-nursery/fluent-plugin-opentelemetry.git && \
+    cd fluent-plugin-opentelemetry && \
+    gem build fluent-plugin-opentelemetry.gemspec && \
+    gem install fluent-plugin-opentelemetry-*.gem
