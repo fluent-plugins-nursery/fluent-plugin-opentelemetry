@@ -5,8 +5,8 @@ for using Fluentd to export OpenTelemetry traces and metrics.
 
 The telemetry data have been provided by js application in `app` directory.
 
-* metrics.js: OpenTelemetry instrumented application that exports metrics to an endpoint (Fluentd) using the otlp protocol
-* tracing.js: OpenTelemetry instrumented application that exports trace data to an endpoint (Fluentd) using the otlp protocol
+* metrics.js: OpenTelemetry instrumented application that exports metrics to an endpoint (Fluentd) using the OpenTelemetry protocol
+* tracing.js: OpenTelemetry instrumented application that exports trace data to an endpoint (Fluentd) using the OpenTelemetry protocol
 
 ### Structure
 
