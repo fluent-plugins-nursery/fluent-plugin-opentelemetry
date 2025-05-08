@@ -12,7 +12,7 @@ class Fluent::Plugin::Opentelemetry::Request
     def initialize(body)
       @request =
         if body.start_with?("{")
-          Opentelemetry::Proto::Collector::Logs::V1::ExportLogsServiceRequest.decode_json(body)
+          Opentelemetry::Proto::Collector::Logs::V1::ExportLogsServiceRequest.decode_json(body, ignore_unknown_fields: true)
         else
           Opentelemetry::Proto::Collector::Logs::V1::ExportLogsServiceRequest.decode(body)
         end
@@ -31,7 +31,7 @@ class Fluent::Plugin::Opentelemetry::Request
     def initialize(body)
       @request =
         if body.start_with?("{")
-          Opentelemetry::Proto::Collector::Metrics::V1::ExportMetricsServiceRequest.decode_json(body)
+          Opentelemetry::Proto::Collector::Metrics::V1::ExportMetricsServiceRequest.decode_json(body, ignore_unknown_fields: true)
         else
           Opentelemetry::Proto::Collector::Metrics::V1::ExportMetricsServiceRequest.decode(body)
         end
@@ -50,7 +50,7 @@ class Fluent::Plugin::Opentelemetry::Request
     def initialize(body)
       @request =
         if body.start_with?("{")
-          Opentelemetry::Proto::Collector::Trace::V1::ExportTraceServiceRequest.decode_json(body)
+          Opentelemetry::Proto::Collector::Trace::V1::ExportTraceServiceRequest.decode_json(body, ignore_unknown_fields: true)
         else
           Opentelemetry::Proto::Collector::Trace::V1::ExportTraceServiceRequest.decode(body)
         end

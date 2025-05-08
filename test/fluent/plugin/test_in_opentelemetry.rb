@@ -99,6 +99,24 @@ class Fluent::Plugin::OpentelemetryInputTest < Test::Unit::TestCase
            request_data: TestData::JSON::LOGS,
            record_type: Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS,
            record_data: TestData::JSON::LOGS
+         },
+         "metrics contained unknown fields" => {
+           request_path: "/v1/metrics",
+           request_data: TestData::JSON::METRICS_CONTAINED_UNKNOWN_FIELD,
+           record_type: Fluent::Plugin::Opentelemetry::RECORD_TYPE_METRICS,
+           record_data: TestData::JSON::METRICS
+         },
+         "traces contained unknown fields" => {
+           request_path: "/v1/traces",
+           request_data: TestData::JSON::TRACES_CONTAINED_UNKNOWN_FIELD,
+           record_type: Fluent::Plugin::Opentelemetry::RECORD_TYPE_TRACES,
+           record_data: TestData::JSON::TRACES
+         },
+         "logs contained unknown fields" => {
+           request_path: "/v1/logs",
+           request_data: TestData::JSON::LOGS_CONTAINED_UNKNOWN_FIELD,
+           record_type: Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS,
+           record_data: TestData::JSON::LOGS
          })
     def test_receive_json(data)
       d = create_driver

@@ -22,8 +22,11 @@ module TestData
     METRICS = ::JSON.generate(::JSON.parse(File.read(File.join(__dir__, "./fluent/resources/data/metrics.json"))))
     TRACES = ::JSON.generate(::JSON.parse(File.read(File.join(__dir__, "./fluent/resources/data/traces.json"))))
     LOGS = ::JSON.generate(::JSON.parse(File.read(File.join(__dir__, "./fluent/resources/data/logs.json"))))
+    METRICS_CONTAINED_UNKNOWN_FIELD = ::JSON.generate(::JSON.parse(File.read(File.join(__dir__, "./fluent/resources/data/metrics-contained-unknown-field.json"))))
+    TRACES_CONTAINED_UNKNOWN_FIELD = ::JSON.generate(::JSON.parse(File.read(File.join(__dir__, "./fluent/resources/data/traces-contained-unknown-field.json"))))
+    LOGS_CONTAINED_UNKNOWN_FIELD = ::JSON.generate(::JSON.parse(File.read(File.join(__dir__, "./fluent/resources/data/logs-contained-unknown-field.json"))))
 
-    INVALID = '{"resourceMetrics": "invalid"}'
+    INVALID = '{"resourceMetrics":{}, "invalid"}'
   end
 
   module ProtocolBuffers
