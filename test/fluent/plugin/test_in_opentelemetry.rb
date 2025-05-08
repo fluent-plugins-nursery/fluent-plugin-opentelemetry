@@ -135,7 +135,7 @@ class Fluent::Plugin::OpentelemetryInputTest < Test::Unit::TestCase
            request_data: "{}",
            record_type: Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS,
            record_data: "{}"
-         },         )
+         })
     def test_receive_json(data)
       d = create_driver
       res = d.run(expect_records: 1) do
