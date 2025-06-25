@@ -53,7 +53,7 @@ This requires to receive data via gRPC.
 | parameter | type    | description            | default   |
 |-----------|---------|------------------------|-----------|
 | bind      | string  | The address to bind to | `0.0.0.0` |
-| port      | integer | The port to listen to  | `4318`    |
+| port      | integer | The port to listen to  | `4317`    |
 
 * `<transport>` section
 
