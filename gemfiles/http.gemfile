@@ -1,0 +1,10 @@
+# frozen_string_literal: true
+
+source "https://rubygems.org"
+
+gemspec path: "../"
+
+# gem "grpc", "~> 1.73"
+gem "rake", "~> 13.0"
+gem "test-unit", "~> 3.0"
+gem "timecop"
