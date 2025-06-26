@@ -2,7 +2,7 @@
 
 Gem::Specification.new do |spec|
   spec.name = "fluent-plugin-opentelemetry"
-  spec.version = "0.1.0"
+  spec.version = "0.2.0"
   spec.authors = ["Shizuo Fujita"]
   spec.email = ["fujita@clear-code.com"]
 
