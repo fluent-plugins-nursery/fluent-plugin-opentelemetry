@@ -9,4 +9,5 @@
 
 /example/node_modules/
 
+/gemfiles/*.lock
 Gemfile.lock

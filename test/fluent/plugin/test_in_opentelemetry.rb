@@ -38,31 +38,43 @@ class Fluent::Plugin::OpentelemetryInputTest < Test::Unit::TestCase
     assert_equal "127.0.0.1", d.instance.http_config.bind
     assert_equal @port, d.instance.http_config.port
 
-    d = create_driver(%[
-      tag opentelemetry.test
-      <grpc>
-        bind 127.0.0.1
-        port #{@port}
-      </grpc>
-    ])
-    assert_equal "127.0.0.1", d.instance.grpc_config.bind
-    assert_equal @port, d.instance.grpc_config.port
+    if defined?(GRPC)
+      d = create_driver(%[
+        tag opentelemetry.test
+        <grpc>
+          bind 127.0.0.1
+          port #{@port}
+        </grpc>
+      ])
+      assert_equal "127.0.0.1", d.instance.grpc_config.bind
+      assert_equal @port, d.instance.grpc_config.port
 
-    d = create_driver(%[
-      tag opentelemetry.test
-      <http>
-        bind 127.0.0.1
-        port #{@port}
-      </http>
-      <grpc>
-        bind 127.0.0.1
-        port #{@port}
-      </grpc>
-    ])
-    assert_equal "127.0.0.1", d.instance.http_config.bind
-    assert_equal @port, d.instance.http_config.port
-    assert_equal "127.0.0.1", d.instance.grpc_config.bind
-    assert_equal @port, d.instance.grpc_config.port
+      d = create_driver(%[
+        tag opentelemetry.test
+        <http>
+          bind 127.0.0.1
+          port #{@port}
+        </http>
+        <grpc>
+          bind 127.0.0.1
+          port #{@port}
+        </grpc>
+      ])
+      assert_equal "127.0.0.1", d.instance.http_config.bind
+      assert_equal @port, d.instance.http_config.port
+      assert_equal "127.0.0.1", d.instance.grpc_config.bind
+      assert_equal @port, d.instance.grpc_config.port
+    else
+      assert_raise(Fluent::ConfigError) do
+        create_driver(%[
+          tag opentelemetry.test
+          <grpc>
+            bind 127.0.0.1
+            port #{@port}
+          </grpc>
+        ])
+      end
+    end
 
     assert_raise(Fluent::ConfigError) do
       create_driver(%[

@@ -2,29 +2,15 @@
 
 require "fluent/plugin/input"
 require "fluent/plugin/opentelemetry/constant"
-require "fluent/plugin/opentelemetry/request"
-require "fluent/plugin/opentelemetry/response"
-require "fluent/plugin/opentelemetry/service_handler"
+require "fluent/plugin/opentelemetry/http_input_handler"
 require "fluent/plugin_helper/http_server"
 require "fluent/plugin_helper/thread"
 
-require "zlib"
+begin
+  require "grpc"
 
-unless Fluent::PluginHelper::HttpServer::Request.method_defined?(:headers)
-  # This API was introduced at fluentd v1.19.0.
-  # Ref. https://github.com/fluent/fluentd/pull/4903
-  # If we have supported v1.19.0+ only, we can remove this patch.
-  module Fluent::PluginHelper::HttpServer
-    module Extension
-      refine Request do
-        def headers
-          @request.headers
-        end
-      end
-    end
-  end
-
-  using Fluent::PluginHelper::HttpServer::Extension
+  require "fluent/plugin/opentelemetry/grpc_input_handler"
+rescue LoadError
 end
 
 module Fluent::Plugin
@@ -57,6 +43,10 @@ module Fluent::Plugin
     def configure(conf)
       super
 
+      if @grpc_config && !defined?(GRPC)
+        raise Fluent::ConfigError, "To use gRPC feature, please install grpc gem such as 'fluent-gem install grpc'."
+      end
+
       unless [@http_config, @grpc_config].any?
         raise Fluent::ConfigError, "Please configure either <http> or <grpc> section, or both."
       end
@@ -66,7 +56,7 @@ module Fluent::Plugin
       super
 
       if @http_config
-        http_handler = HttpHandler.new
+        http_handler = Opentelemetry::HttpInputHandler.new
         http_server_create_http_server(:in_opentelemetry_http_server, addr: @http_config.bind, port: @http_config.port, logger: log) do |serv|
           serv.post("/v1/logs") do |req|
             http_handler.logs(req) { |record| router.emit(@tag, Fluent::EventTime.now, { type: Opentelemetry::RECORD_TYPE_LOGS, message: record }) }
@@ -82,7 +72,7 @@ module Fluent::Plugin
 
       if @grpc_config
         thread_create(:in_opentelemetry_grpc_server) do
-          grpc_handler = GrpcHandler.new(@grpc_config, log)
+          grpc_handler = Opentelemetry::GrpcInputHandler.new(@grpc_config, log)
           grpc_handler.run(
             logs: lambda { |record|
               router.emit(@tag, Fluent::EventTime.now, { type: Opentelemetry::RECORD_TYPE_LOGS, message: record })
@@ -95,116 +85,6 @@ module Fluent::Plugin
             }
           )
         end
-      end
-    end
-
-    class HttpHandler
-      def logs(req, &block)
-        common(req, Opentelemetry::Request::Logs, Opentelemetry::Response::Logs, &block)
-      end
-
-      def metrics(req, &block)
-        common(req, Opentelemetry::Request::Metrics, Opentelemetry::Response::Metrics, &block)
-      end
-
-      def traces(req, &block)
-        common(req, Opentelemetry::Request::Traces, Opentelemetry::Response::Traces, &block)
-      end
-
-      private
-
-      def common(req, request_class, response_class)
-        content_type = req.headers["content-type"]
-        content_encoding = req.headers["content-encoding"]&.first
-        return response_unsupported_media_type unless valid_content_type?(content_type)
-        return response_bad_request(content_type) unless valid_content_encoding?(content_encoding)
-
-        body = req.body
-        body = Zlib::GzipReader.new(StringIO.new(body)).read if content_encoding == Opentelemetry::CONTENT_ENCODING_GZIP
-
-        begin
-          record = request_class.new(body).record
-        rescue Google::Protobuf::ParseError
-          # The format in request body does not comply with the OpenTelemetry protocol.
-          return response_bad_request(content_type)
-        end
-
-        yield record
-
-        res = response_class.new
-        response(200, content_type, res.body(type: Opentelemetry::Response.type(content_type)))
-      end
-
-      def valid_content_type?(content_type)
-        case content_type
-        when Opentelemetry::CONTENT_TYPE_PROTOBUF, Opentelemetry::CONTENT_TYPE_JSON
-          true
-        else
-          false
-        end
-      end
-
-      def valid_content_encoding?(content_encoding)
-        return true if content_encoding.nil?
-
-        content_encoding == Opentelemetry::CONTENT_ENCODING_GZIP
-      end
-
-      def response(code, content_type, body)
-        [code, { Opentelemetry::CONTENT_TYPE => content_type }, body]
-      end
-
-      def response_unsupported_media_type
-        response(415, Opentelemetry::CONTENT_TYPE_PAIN, "415 unsupported media type, supported: [application/json, application/x-protobuf]")
-      end
-
-      def response_bad_request(content_type)
-        response(400, content_type, "") # TODO: fix body message
-      end
-    end
-
-    class GrpcHandler
-      class ExceptionInterceptor < GRPC::ServerInterceptor
-        def request_response(request:, call:, method:)
-          # call actual service
-          yield
-        rescue StandardError => e
-          puts "[#{method}] Error: #{e.message}"
-          raise
-        end
-      end
-
-      def initialize(grpc_config, logger)
-        @grpc_config = grpc_config
-        @logger = logger
-      end
-
-      def run(logs:, metrics:, traces:)
-        server = GRPC::RpcServer.new(interceptors: [ExceptionInterceptor.new])
-        server.add_http2_port("#{@grpc_config.bind}:#{@grpc_config.port}", :this_port_is_insecure)
-
-        logs_handler = Opentelemetry::ServiceHandler::Logs.new
-        logs_handler.callback = lambda { |request|
-          logs.call(request.to_json)
-          Opentelemetry::Response::Logs.build
-        }
-        server.handle(logs_handler)
-
-        metrics_handler = Opentelemetry::ServiceHandler::Metrics.new
-        metrics_handler.callback = lambda { |request|
-          metrics.call(request.to_json)
-          Opentelemetry::Response::Metrics.build
-        }
-        server.handle(metrics_handler)
-
-        traces_handler = Opentelemetry::ServiceHandler::Traces.new
-        traces_handler.callback = lambda { |request|
-          traces.call(request.to_json)
-          Opentelemetry::Response::Traces.build
-        }
-        server.handle(traces_handler)
-
-        server.run_till_terminated
       end
     end
   end

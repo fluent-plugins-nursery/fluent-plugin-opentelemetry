@@ -46,6 +46,7 @@ This requires to receive data via HTTP/HTTPS.
 #### `<grpc>` section
 
 This requires to receive data via gRPC.
+It needs to install `grpc` gem manually to use this feature.
 
 > [!WARNING]
 > Now, gRPC feature status is experimental.
@@ -103,6 +104,7 @@ This requires to send data via HTTP/HTTPS.
 #### `<grpc>` section
 
 This requires to send data via gRPC.
+It needs to install `grpc` gem manually to use this feature.
 
 > [!WARNING]
 > Now, gRPC feature status is experimental.
