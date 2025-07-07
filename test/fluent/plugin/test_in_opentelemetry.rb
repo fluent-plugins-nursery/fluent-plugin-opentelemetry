@@ -154,7 +154,7 @@ class Fluent::Plugin::OpentelemetryInputTest < Test::Unit::TestCase
         post_json(data[:request_path], data[:request_data])
       end
 
-      expected_events = [["opentelemetry.test", @event_time, { type: data[:record_type], message: data[:record_data] }]]
+      expected_events = [["opentelemetry.test", @event_time, { "type" => data[:record_type], "message" => data[:record_data] }]]
       assert_equal(200, res.status)
       assert_equal(expected_events, d.events)
     end
@@ -165,7 +165,7 @@ class Fluent::Plugin::OpentelemetryInputTest < Test::Unit::TestCase
         post_json("/v1/logs", compress(TestData::JSON::LOGS), headers: { "Content-Encoding" => "gzip" })
       end
 
-      expected_events = [["opentelemetry.test", @event_time, { type: "opentelemetry_logs", message: TestData::JSON::LOGS }]]
+      expected_events = [["opentelemetry.test", @event_time, { "type" => "opentelemetry_logs", "message" => TestData::JSON::LOGS }]]
       assert_equal(200, res.status)
       assert_equal(expected_events, d.events)
     end
@@ -203,7 +203,7 @@ class Fluent::Plugin::OpentelemetryInputTest < Test::Unit::TestCase
         post_protobuf(data[:request_path], data[:request_data])
       end
 
-      expected_events = [["opentelemetry.test", @event_time, { type: data[:record_type], message: data[:record_data] }]]
+      expected_events = [["opentelemetry.test", @event_time, { "type" => data[:record_type], "message" => data[:record_data] }]]
       assert_equal(200, res.status)
       assert_equal(expected_events, d.events)
     end
@@ -214,7 +214,7 @@ class Fluent::Plugin::OpentelemetryInputTest < Test::Unit::TestCase
         post_protobuf("/v1/logs", compress(TestData::ProtocolBuffers::LOGS), headers: { "Content-Encoding" => "gzip" })
       end
 
-      expected_events = [["opentelemetry.test", @event_time, { type: "opentelemetry_logs", message: TestData::JSON::LOGS }]]
+      expected_events = [["opentelemetry.test", @event_time, { "type" => "opentelemetry_logs", "message" => TestData::JSON::LOGS }]]
       assert_equal(200, res.status)
       assert_equal(expected_events, d.events)
     end
@@ -270,7 +270,7 @@ class Fluent::Plugin::OpentelemetryInputTest < Test::Unit::TestCase
         post_https_json("/v1/logs", TestData::JSON::LOGS)
       end
 
-      expected_events = [["opentelemetry.test", @event_time, { type: "opentelemetry_logs", message: TestData::JSON::LOGS }]]
+      expected_events = [["opentelemetry.test", @event_time, { "type" => "opentelemetry_logs", "message" => TestData::JSON::LOGS }]]
       assert_equal(200, res.status)
       assert_equal(expected_events, d.events)
     end
@@ -281,7 +281,7 @@ class Fluent::Plugin::OpentelemetryInputTest < Test::Unit::TestCase
         post_https_protobuf("/v1/logs", TestData::ProtocolBuffers::LOGS)
       end
 
-      expected_events = [["opentelemetry.test", @event_time, { type: "opentelemetry_logs", message: TestData::JSON::LOGS }]]
+      expected_events = [["opentelemetry.test", @event_time, { "type" => "opentelemetry_logs", "message" => TestData::JSON::LOGS }]]
       assert_equal(200, res.status)
       assert_equal(expected_events, d.events)
     end

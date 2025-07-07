@@ -59,13 +59,13 @@ module Fluent::Plugin
         http_handler = Opentelemetry::HttpInputHandler.new
         http_server_create_http_server(:in_opentelemetry_http_server, addr: @http_config.bind, port: @http_config.port, logger: log) do |serv|
           serv.post("/v1/logs") do |req|
-            http_handler.logs(req) { |record| router.emit(@tag, Fluent::EventTime.now, { type: Opentelemetry::RECORD_TYPE_LOGS, message: record }) }
+            http_handler.logs(req) { |record| router.emit(@tag, Fluent::EventTime.now, { "type" => Opentelemetry::RECORD_TYPE_LOGS, "message" => record }) }
           end
           serv.post("/v1/metrics") do |req|
-            http_handler.metrics(req) { |record| router.emit(@tag, Fluent::EventTime.now, { type: Opentelemetry::RECORD_TYPE_METRICS, message: record }) }
+            http_handler.metrics(req) { |record| router.emit(@tag, Fluent::EventTime.now, { "type" => Opentelemetry::RECORD_TYPE_METRICS, "message" => record }) }
           end
           serv.post("/v1/traces") do |req|
-            http_handler.traces(req) { |record| router.emit(@tag, Fluent::EventTime.now, { type: Opentelemetry::RECORD_TYPE_TRACES, message: record }) }
+            http_handler.traces(req) { |record| router.emit(@tag, Fluent::EventTime.now, { "type" => Opentelemetry::RECORD_TYPE_TRACES, "message" => record }) }
           end
         end
       end
@@ -75,13 +75,13 @@ module Fluent::Plugin
           grpc_handler = Opentelemetry::GrpcInputHandler.new(@grpc_config, log)
           grpc_handler.run(
             logs: lambda { |record|
-              router.emit(@tag, Fluent::EventTime.now, { type: Opentelemetry::RECORD_TYPE_LOGS, message: record })
+              router.emit(@tag, Fluent::EventTime.now, { "type" => Opentelemetry::RECORD_TYPE_LOGS, "message" => record })
             },
             metrics: lambda { |record|
-              router.emit(@tag, Fluent::EventTime.now, { type: Opentelemetry::RECORD_TYPE_METRICS, message: record })
+              router.emit(@tag, Fluent::EventTime.now, { "type" => Opentelemetry::RECORD_TYPE_METRICS, "message" => record })
             },
             traces: lambda { |record|
-              router.emit(@tag, Fluent::EventTime.now, { type: Opentelemetry::RECORD_TYPE_TRACES, message: record })
+              router.emit(@tag, Fluent::EventTime.now, { "type" => Opentelemetry::RECORD_TYPE_TRACES, "message" => record })
             }
           )
         end
