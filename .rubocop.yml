@@ -1,3 +1,7 @@
+plugins:
+  - rubocop-performance
+  - rubocop-fluentd
+
 AllCops:
   Exclude:
     - 'lib/opentelemetry/**/*'
@@ -6,6 +10,15 @@ AllCops:
   SuggestExtensions: false
   TargetRubyVersion: 3.2
 
+# rubocop-fluentd
+Lint/FluentdPluginLogScope:
+  Enabled: true
+Lint/FluentdPluginConfigParamDefaultTime:
+  Enabled: true
+Performance/FluentdPluginLogStringInterpolation:
+  Enabled: true
+
+# rubocop
 Gemspec/DevelopmentDependencies:
   Enabled: false
 
