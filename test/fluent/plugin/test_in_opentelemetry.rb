@@ -287,6 +287,50 @@ class Fluent::Plugin::OpentelemetryInputTest < Test::Unit::TestCase
     end
   end
 
+  sub_test_case "Placeholder" do
+    def config
+      <<~"CONFIG"
+        tag opentelemetry.${type}
+        <http>
+          bind 127.0.0.1
+          port #{@port}
+        </http>
+      CONFIG
+    end
+
+    data("metrics" => {
+           request_path: "/v1/metrics",
+           request_data: TestData::JSON::METRICS,
+           record_type: Fluent::Plugin::Opentelemetry::RECORD_TYPE_METRICS,
+           record_data: TestData::JSON::METRICS,
+           expanded_tag: "opentelemetry.metrics"
+         },
+         "traces" => {
+           request_path: "/v1/traces",
+           request_data: TestData::JSON::TRACES,
+           record_type: Fluent::Plugin::Opentelemetry::RECORD_TYPE_TRACES,
+           record_data: TestData::JSON::TRACES,
+           expanded_tag: "opentelemetry.traces"
+         },
+         "logs" => {
+           request_path: "/v1/logs",
+           request_data: TestData::JSON::LOGS,
+           record_type: Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS,
+           record_data: TestData::JSON::LOGS,
+           expanded_tag: "opentelemetry.logs"
+         })
+    def test_type_placeholder(data)
+      d = create_driver
+      res = d.run(expect_records: 1) do
+        post_json(data[:request_path], data[:request_data])
+      end
+
+      expected_events = [[data[:expanded_tag], @event_time, { "type" => data[:record_type], "message" => data[:record_data] }]]
+      assert_equal(200, res.status)
+      assert_equal(expected_events, d.events)
+    end
+  end
+
   def compress(data)
     gz = Zlib::GzipWriter.new(StringIO.new)
     gz << data

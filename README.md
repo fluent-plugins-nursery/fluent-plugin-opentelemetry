@@ -34,6 +34,33 @@ To receive data, this plugin requires `<http>` or `<grpc>` section, or both.
 |-----------|--------|----------------------|----------|
 | tag       | string | The tag of the event | required |
 
+`tag` parameter supports `${type}` placeholder and it will be expanded with data type.
+
+* log data
+  * `${type}` will be replaced to `logs`
+* metric data
+  * `${type}` will be replaced to `metrics`
+* trace data
+  * `${type}` will be replaced to `traces`
+
+This can be used to change the output destination for each message type.
+
+Example:
+
+```
+<source>
+  @type opentelemetry
+
+  # Expand to opentelemetry.logs, opentelemetry.metrics, opentelemetry.traces according to received data.
+  tag opentelemetry.${type}
+
+  <http>
+    bind 127.0.0.1
+    port 4318
+  </http>
+</source>
+```
+
 #### `<http>` section
 
 This requires to receive data via HTTP/HTTPS.

@@ -16,6 +16,11 @@ module Fluent::Plugin::Opentelemetry
   RECORD_TYPE_METRICS = "opentelemetry_metrics"
   RECORD_TYPE_TRACES = "opentelemetry_traces"
 
+  PLACEHOLDER_TYPE = "${type}"
+  PLACEHOLDER_TYPE_LOGS = "logs"
+  PLACEHOLDER_TYPE_METRICS = "metrics"
+  PLACEHOLDER_TYPE_TRACES = "traces"
+
   TLS_VERSIONS_MAP =
     begin
       map = {
