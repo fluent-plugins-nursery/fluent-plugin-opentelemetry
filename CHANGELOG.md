@@ -1,5 +1,10 @@
 ## [Unreleased]
 
+## [0.3.0] - 2025-07-23
+
+- in_opentelemetry: add ${type} placeholder support in tag parameter (#8)
+- in_opentelemetry: use String for record keys (#6)
+
 ## [0.2.0] - 2025-06-26
 
 - Make gRPC sending and receiving optional (#4)
