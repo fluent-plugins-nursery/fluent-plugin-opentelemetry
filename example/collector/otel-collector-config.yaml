@@ -13,18 +13,18 @@ exporters:
     endpoint: http://elasticsearch:9200
   prometheus:
     endpoint: "0.0.0.0:8889"
-  otlp:
-    endpoint: "jaeger:4317"
-    tls:
-      insecure: true
+  # otlp:
+  #   endpoint: "jaeger:4317"
+  #   tls:
+  #     insecure: true
   debug:
     verbosity: detailed
 
 service:
   pipelines:
-    traces:
-      receivers: [otlp]
-      exporters: [debug, otlp]
+    # traces:
+    #   receivers: [otlp]
+    #   exporters: [debug, otlp]
     metrics:
       receivers: [otlp]
       exporters: [debug, prometheus]

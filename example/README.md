@@ -15,10 +15,9 @@ flowchart LR
     A[app/metrics.js] -->|metric data / otlp| C[Fluentd]
     B[app/tracing.js] -->|trace data / otlp| C[Fluentd]
     C[Fluentd] -->|metric data / otlp| D[Otel Collector]
-    C[Fluentd] -->|trace data / otlp| D[Otel Collector]
+    C[Fluentd] -->|trace data / otlp| F[Jaeger]
     C[Fluentd] -->|sample log / Fluentd Forward Protocol| D[Otel Collector]
     D[Otel Collector] -->|metric data| E[Prometheus / Grafana]
-    D[Otel Collector] -->|trace data| F[Jaeger]
     D[Otel Collector] -->|sample log| G[Elasticsearch / Kibana]
 ```
 
