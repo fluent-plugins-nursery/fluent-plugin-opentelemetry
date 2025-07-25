@@ -12,8 +12,11 @@ AllCops:
 
 # rubocop-fluentd
 Lint/FluentdPluginLogScope:
+  AssumeConfigLogLevel: 'info'
   Enabled: true
 Lint/FluentdPluginConfigParamDefaultTime:
+  Enabled: true
+Lint/FluentdPluginIgnoreStandardError:
   Enabled: true
 Performance/FluentdPluginLogStringInterpolation:
   Enabled: true
