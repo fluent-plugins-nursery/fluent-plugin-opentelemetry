@@ -24,7 +24,7 @@ $ bundle
 
 ## Configuration
 
-### Input plugin
+### Input `opentelemetry` plugin
 
 To receive data, this plugin requires `<http>` or `<grpc>` section, or both.
 
@@ -106,7 +106,40 @@ Refer [Config: Transport Section](https://docs.fluentd.org/configuration/transpo
 </source>
 ```
 
-### Output plugin
+### Input `opentelemetry_metrics` plugin
+
+This plugin emits Fluentd's metric data that conforms to the OpenTelemetry Protocol.
+To output the data, it requires to use output `opentelemetry` plugin.
+
+#### Root section
+
+| parameter          | type   | description                                           | default     |
+|--------------------|--------|-------------------------------------------------------|-------------|
+| tag                | string | The tag of the event                                  | required    |
+| emit_interval      | time   | Determine the rate to emit internal metrics as events | `60`        |
+| metric_name_prefix | string | The prefix of metric name                             | `fluentd_`  |
+
+#### Example
+
+```
+# Emit Fluentd metrics
+<source>
+  @type opentelemetry_metrics
+  tag opentelemetry.fluentd.metrics
+  emit_interval 300s
+</source>
+
+# Send Fluentd metrics to OpenTelemetry Collector
+<match opentelemetry.fluentd.metrics>
+  @type opentelemetry
+
+  <http>
+    endpoint "https://127.0.0.1:4318"
+  </http>
+</match>
+```
+
+### Output `opentelemetry` plugin
 
 To send data, this plugin requires `<http>` or `<grpc>` section.
 

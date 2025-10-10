@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
+require_relative "lib/fluent/plugin/opentelemetry/version"
+
 Gem::Specification.new do |spec|
   spec.name = "fluent-plugin-opentelemetry"
-  spec.version = "0.3.0"
+  spec.version = Fluent::Plugin::Opentelemetry::VERSION
   spec.authors = ["Shizuo Fujita"]
   spec.email = ["fujita@clear-code.com"]
 

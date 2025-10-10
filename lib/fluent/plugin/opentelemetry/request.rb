@@ -9,10 +9,10 @@ require "google/protobuf"
 
 class Fluent::Plugin::Opentelemetry::Request
   class Logs
-    def initialize(body)
+    def initialize(body, ignore_unknown_fields: true)
       @request =
         if body.start_with?("{")
-          Opentelemetry::Proto::Collector::Logs::V1::ExportLogsServiceRequest.decode_json(body, ignore_unknown_fields: true)
+          Opentelemetry::Proto::Collector::Logs::V1::ExportLogsServiceRequest.decode_json(body, ignore_unknown_fields: ignore_unknown_fields)
         else
           Opentelemetry::Proto::Collector::Logs::V1::ExportLogsServiceRequest.decode(body)
         end
@@ -28,10 +28,10 @@ class Fluent::Plugin::Opentelemetry::Request
   end
 
   class Metrics
-    def initialize(body)
+    def initialize(body, ignore_unknown_fields: true)
       @request =
         if body.start_with?("{")
-          Opentelemetry::Proto::Collector::Metrics::V1::ExportMetricsServiceRequest.decode_json(body, ignore_unknown_fields: true)
+          Opentelemetry::Proto::Collector::Metrics::V1::ExportMetricsServiceRequest.decode_json(body, ignore_unknown_fields: ignore_unknown_fields)
         else
           Opentelemetry::Proto::Collector::Metrics::V1::ExportMetricsServiceRequest.decode(body)
         end
@@ -47,10 +47,10 @@ class Fluent::Plugin::Opentelemetry::Request
   end
 
   class Traces
-    def initialize(body)
+    def initialize(body, ignore_unknown_fields: true)
       @request =
         if body.start_with?("{")
-          Opentelemetry::Proto::Collector::Trace::V1::ExportTraceServiceRequest.decode_json(body, ignore_unknown_fields: true)
+          Opentelemetry::Proto::Collector::Trace::V1::ExportTraceServiceRequest.decode_json(body, ignore_unknown_fields: ignore_unknown_fields)
         else
           Opentelemetry::Proto::Collector::Trace::V1::ExportTraceServiceRequest.decode(body)
         end
