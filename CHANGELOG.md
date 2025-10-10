@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+## [0.4.0] - 2025-10-10
+
+- in_opentelemetry_metrics: Add plugin to support fluentd metrics export (#10)
+
 ## [0.3.0] - 2025-07-23
 
 - in_opentelemetry: add ${type} placeholder support in tag parameter (#8)
