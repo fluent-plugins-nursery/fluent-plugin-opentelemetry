@@ -14,6 +14,9 @@ require "test-unit"
 require "timecop"
 require "zlib"
 
+require "rr"
+require "test/unit/rr"
+
 include Fluent::Test::Helpers
 
 module TestData

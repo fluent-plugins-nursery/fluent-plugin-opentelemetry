@@ -12,12 +12,12 @@ The telemetry data have been provided by js application in `app` directory.
 
 ```mermaid
 flowchart LR
-    A[app/metrics.js] -->|metric data / otlp| C[Fluentd]
-    B[app/tracing.js] -->|trace data / otlp| C[Fluentd]
-    C[Fluentd] -->|metric data / otlp| D[Otel Collector]
-    C[Fluentd] -->|trace data / otlp| F[Jaeger]
+    A[app/metrics.js] -->|app metric data / otlp| C[Fluentd]
+    B[app/tracing.js] -->|app trace data / otlp| C[Fluentd]
+    C[Fluentd] -->|app metric data / otlp <br> Fluentd metric data / otlp| D[Otel Collector]
+    C[Fluentd] -->|app trace data / otlp| F[Jaeger]
     C[Fluentd] -->|sample log / Fluentd Forward Protocol| D[Otel Collector]
-    D[Otel Collector] -->|metric data| E[Prometheus / Grafana]
+    D[Otel Collector] -->|app metric data <br> Fluentd metric data | E[Prometheus / Grafana]
     D[Otel Collector] -->|sample log| G[Elasticsearch / Kibana]
 ```
 
@@ -31,7 +31,7 @@ This demo uses Prometheus / Grafana to visualize the metrics data.
 
 1. Go to [`localhost:3000`](http://localhost:3000) and login to Grafana using credentials admin, admin
 
-2. Then, show `demo > Basic Service Trace` in [dashboard](http://localhost:3000/dashboards).
+2. Then, show `demo > OpenTelemetry` in [dashboard](http://localhost:3000/dashboards).
 
 ![dashboard](./assets/dashboard.png)
 
@@ -54,7 +54,7 @@ This demo uses Elasticsearch / Kibana to visualize the trace data.
 
 ![discover](./assets/discover.png)
 
-2. Specify `logs-*` to Index pattern and click Save data view to Kibana. 
+2. Specify `logs-*` to Index pattern and click Save data view to Kibana.
 
 ![create data view](./assets/create_data_view.png)
 
