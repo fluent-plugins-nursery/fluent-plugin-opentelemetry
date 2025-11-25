@@ -1,12 +1,4 @@
 # frozen_string_literal: true
 
-source "https://rubygems.org"
-
-gemspec path: "../"
-
-# gem "grpc"
-gem "rake"
-gem "rr"
-gem "test-unit"
-gem "test-unit-rr"
-gem "timecop"
+# Load common dependencies
+eval_gemfile("../Gemfile")
