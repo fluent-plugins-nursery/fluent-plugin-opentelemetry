@@ -5,8 +5,10 @@ source "https://rubygems.org"
 # Specify your gem's dependencies in fluent-plugin-opentelemetry.gemspec
 gemspec
 
-gem "grpc"
-gem "grpc-tools"
+unless ENV["CI"]
+  gem "grpc"
+  gem "grpc-tools"
+end
 gem "irb"
 gem "rake"
 gem "rr"
