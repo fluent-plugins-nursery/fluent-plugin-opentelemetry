@@ -119,5 +119,23 @@ if defined?(GRPC)
 
       assert_equal(TestData::JSON::TRACES, @trace_service.received.to_json)
     end
+
+    def test_send_compressed_message
+      event = { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_METRICS, "message" => TestData::JSON::METRICS }
+
+      d = create_driver <<~"CONFIG"
+        <grpc>
+          endpoint "127.0.0.1:#{@port}"
+          compress gzip
+        </grpc>
+      CONFIG
+
+      d.run(default_tag: "opentelemetry.test") do
+        d.feed(event)
+      end
+
+      assert_equal(TestData::JSON::METRICS, @metrics_service.received.to_json)
+      assert_equal(:gzip, d.instance.grpc_config.compress)
+    end
   end
 end

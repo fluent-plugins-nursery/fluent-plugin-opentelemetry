@@ -50,6 +50,9 @@ module Fluent::Plugin
     config_section :grpc, required: false, multi: false, init: false, param_name: :grpc_config do
       desc "The endpoint"
       config_param :endpoint, :string, default: "127.0.0.1:4317"
+
+      desc "Compress request body"
+      config_param :compress, :enum, list: %i[text gzip], default: :text
     end
 
     config_section :transport, required: false, multi: false, init: false, param_name: :transport_config do

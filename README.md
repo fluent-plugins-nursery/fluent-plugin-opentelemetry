@@ -171,7 +171,11 @@ It needs to install `grpc` gem manually to use this feature.
 
 | parameter                       | type    | description                                                    | default          |
 |---------------------------------|---------|----------------------------------------------------------------|------------------|
-| endpoint                        | string  | The endpoint for HTTP/HTTPS request                            | `127.0.0.1:4317` |
+| endpoint                        | string  | The endpoint for gRPC request                                  | `127.0.0.1:4317` |
+
+| parameter | type   | description                               | available values | default |
+|-----------|--------|-------------------------------------------|------------------|---------|
+| compress  | enum   | The option to compress gRPC request body  | `text` / `gzip`  | `text`  |
 
 #### `<transport>` section
 

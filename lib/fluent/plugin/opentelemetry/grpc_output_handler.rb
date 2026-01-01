@@ -50,6 +50,9 @@ class Fluent::Plugin::Opentelemetry::GrpcOutputHandler
     @grpc_config = grpc_config
     @transport_config = transport_config
     @logger = logger
+
+    @channel_args = {}
+    @channel_args = GRPC::Core::CompressionOptions.new({ default_algorithm: :gzip }).to_channel_arg_hash if @grpc_config.compress == :gzip
   end
 
   def export(record)
@@ -59,11 +62,11 @@ class Fluent::Plugin::Opentelemetry::GrpcOutputHandler
 
     case record["type"]
     when Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS
-      service = ServiceStub::Logs.new(@grpc_config.endpoint, credential)
+      service = ServiceStub::Logs.new(@grpc_config.endpoint, credential, channel_args: @channel_args)
     when Fluent::Plugin::Opentelemetry::RECORD_TYPE_METRICS
-      service = ServiceStub::Metrics.new(@grpc_config.endpoint, credential)
+      service = ServiceStub::Metrics.new(@grpc_config.endpoint, credential, channel_args: @channel_args)
     when Fluent::Plugin::Opentelemetry::RECORD_TYPE_TRACES
-      service = ServiceStub::Traces.new(@grpc_config.endpoint, credential)
+      service = ServiceStub::Traces.new(@grpc_config.endpoint, credential, channel_args: @channel_args)
     end
 
     begin
