@@ -34,20 +34,20 @@ class Fluent::Plugin::Opentelemetry::HttpOutputHandler
     uri, connection = create_http_connection(record)
     response = connection.post
 
-    if response.status != 200
-      if response.status == 400
-        # The client MUST NOT retry the request when it receives HTTP 400 Bad Request response.
-        raise Fluent::UnrecoverableError, "got unrecoverable error response from '#{uri}', response code is #{response.status}"
-      end
+    return if response.status >= 200 && response.status < 300
 
-      if @http_config.retryable_response_codes&.include?(response.status)
-        raise Fluent::Plugin::OpentelemetryOutput::RetryableResponse, "got retryable error response from '#{uri}', response code is #{response.status}"
-      end
-      if @http_config.error_response_as_unrecoverable
-        raise Fluent::UnrecoverableError, "got unrecoverable error response from '#{uri}', response code is #{response.status}"
-      else
-        @logger.error "got error response from '#{uri}', response code is #{response.status}"
-      end
+    if response.status == 400
+      # The client MUST NOT retry the request when it receives HTTP 400 Bad Request response.
+      raise Fluent::UnrecoverableError, "got unrecoverable error response from '#{uri}', response code is #{response.status}"
+    end
+
+    if @http_config.retryable_response_codes&.include?(response.status)
+      raise Fluent::Plugin::OpentelemetryOutput::RetryableResponse, "got retryable error response from '#{uri}', response code is #{response.status}"
+    end
+    if @http_config.error_response_as_unrecoverable
+      raise Fluent::UnrecoverableError, "got unrecoverable error response from '#{uri}', response code is #{response.status}"
+    else
+      @logger.error "got error response from '#{uri}', response code is #{response.status}"
     end
   end
 

@@ -174,6 +174,21 @@ class Fluent::Plugin::OpentelemetryOutputTest < Test::Unit::TestCase
       assert_equal(TestData::ProtocolBuffers::LOGS, decompress(server_request.body).force_encoding(Encoding::ASCII_8BIT))
     end
 
+    def test_server_returns_20x_status_code
+      server_response_code(201)
+      event = { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_METRICS, "message" => TestData::JSON::METRICS }
+
+      d = create_driver
+      d.run(default_tag: "opentelemetry.test") do
+        d.feed(event)
+      end
+
+      assert_equal("/v1/metrics", server_request.path)
+      assert_equal("POST", server_request.request_method)
+      assert_equal(["application/x-protobuf"], server_request.header["content-type"])
+      assert_equal(TestData::ProtocolBuffers::METRICS, server_request.body)
+    end
+
     def test_unrecoverable_error
       server_response_code(500)
       event = { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS, "message" => TestData::JSON::LOGS }
