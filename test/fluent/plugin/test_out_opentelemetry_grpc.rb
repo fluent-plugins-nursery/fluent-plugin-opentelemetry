@@ -70,6 +70,7 @@ if defined?(GRPC)
     end
 
     def teardown
+      @grpc_server.stop
       @@grpc_server_thread.kill
       @@grpc_server_thread = nil
     end
