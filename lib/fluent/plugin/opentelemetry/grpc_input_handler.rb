@@ -55,31 +55,35 @@ module Fluent::Plugin::Opentelemetry
     end
 
     def run(logs:, metrics:, traces:)
-      server = GRPC::RpcServer.new(interceptors: [ExceptionInterceptor.new])
-      server.add_http2_port("#{@grpc_config.bind}:#{@grpc_config.port}", :this_port_is_insecure)
+      @server = GRPC::RpcServer.new(interceptors: [ExceptionInterceptor.new])
+      @server.add_http2_port("#{@grpc_config.bind}:#{@grpc_config.port}", :this_port_is_insecure)
 
       logs_handler = ServiceHandler::Logs.new
       logs_handler.callback = lambda { |request|
         logs.call(request.to_json)
         Fluent::Plugin::Opentelemetry::Response::Logs.build
       }
-      server.handle(logs_handler)
+      @server.handle(logs_handler)
 
       metrics_handler = ServiceHandler::Metrics.new
       metrics_handler.callback = lambda { |request|
         metrics.call(request.to_json)
         Fluent::Plugin::Opentelemetry::Response::Metrics.build
       }
-      server.handle(metrics_handler)
+      @server.handle(metrics_handler)
 
       traces_handler = ServiceHandler::Traces.new
       traces_handler.callback = lambda { |request|
         traces.call(request.to_json)
         Fluent::Plugin::Opentelemetry::Response::Traces.build
       }
-      server.handle(traces_handler)
+      @server.handle(traces_handler)
 
-      server.run_till_terminated
+      @server.run_till_terminated
+    end
+
+    def stop
+      @server.stop
     end
   end
 end

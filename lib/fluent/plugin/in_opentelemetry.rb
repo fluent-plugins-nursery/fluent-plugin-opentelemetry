@@ -74,8 +74,8 @@ module Fluent::Plugin
 
       if @grpc_config
         thread_create(:in_opentelemetry_grpc_server) do
-          grpc_handler = Opentelemetry::GrpcInputHandler.new(@grpc_config, log)
-          grpc_handler.run(
+          @grpc_handler = Opentelemetry::GrpcInputHandler.new(@grpc_config, log)
+          @grpc_handler.run(
             logs: lambda { |record|
               router.emit(tag_for(Opentelemetry::RECORD_TYPE_LOGS), Fluent::EventTime.now, { "type" => Opentelemetry::RECORD_TYPE_LOGS, "message" => record })
             },
@@ -88,6 +88,12 @@ module Fluent::Plugin
           )
         end
       end
+    end
+
+    def stop
+      @grpc_handler&.stop
+
+      super
     end
 
     private
