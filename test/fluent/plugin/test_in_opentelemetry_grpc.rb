@@ -120,16 +120,15 @@ if defined?(GRPC)
     def test_receive_compressed_data
       d = create_driver
       d.run(expect_records: 1) do
-        post_grpc(Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS, TestData::JSON::LOGS, compress: true)
+        post_grpc(Fluent::Plugin::Opentelemetry::RECORD_TYPE_METRICS, TestData::JSON::METRICS, compress: true)
       end
 
-      expected_events = [["opentelemetry.test", @event_time, { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS, "message" => TestData::JSON::LOGS }]]
+      expected_events = [["opentelemetry.test", @event_time, { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_METRICS, "message" => TestData::JSON::METRICS }]]
       assert_equal(expected_events, d.events)
     end
 
     def post_grpc(type, json_data, compress: false)
-      channel_args = {}
-      channel_args["grpc.default_compression_algorithm"] = :gzip if compress
+      channel_args = compress ? GRPC::Core::CompressionOptions.new({ default_algorithm: :gzip }).to_channel_arg_hash : {}
       service =
         case type
         when Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS
