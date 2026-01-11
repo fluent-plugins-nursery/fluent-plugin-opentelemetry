@@ -3,9 +3,9 @@ Ref. https://github.com/open-telemetry/opentelemetry-proto/blob/main/docs/specif
 
 # Protocol Details
 ## OTLP/gRPC
-- [ ] [MUST] All server components MUST support the following transport compression options:
-  - [ ] [MUST] No compression, denoted by none.
-  - [ ] [MUST] Gzip compression, denoted by gzip.
+- [x] [MUST] All server components MUST support the following transport compression options:
+  - [x] [MUST] No compression, denoted by none.
+  - [x] [MUST] Gzip compression, denoted by gzip.
 
 ### OTLP/gRPC Concurrent Requests
 - [ ] [SHOULD] The implementations that need to achieve high throughput SHOULD support concurrent Unary calls to achieve higher throughput.
