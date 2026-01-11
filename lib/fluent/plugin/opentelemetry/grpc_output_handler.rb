@@ -17,9 +17,9 @@ class Fluent::Plugin::Opentelemetry::GrpcOutputHandler
         @stub = Opentelemetry::Proto::Collector::Logs::V1::LogsService::Stub.new(host, creds, **kw)
       end
 
-      def export(json)
+      def export(json, **kw)
         message = Opentelemetry::Proto::Collector::Logs::V1::ExportLogsServiceRequest.decode_json(json)
-        @stub.export(message)
+        @stub.export(message, **kw)
       end
     end
 
@@ -28,9 +28,9 @@ class Fluent::Plugin::Opentelemetry::GrpcOutputHandler
         @stub = Opentelemetry::Proto::Collector::Metrics::V1::MetricsService::Stub.new(host, creds, **kw)
       end
 
-      def export(json)
+      def export(json, **kw)
         message = Opentelemetry::Proto::Collector::Metrics::V1::ExportMetricsServiceRequest.decode_json(json)
-        @stub.export(message)
+        @stub.export(message, **kw)
       end
     end
 
@@ -39,9 +39,9 @@ class Fluent::Plugin::Opentelemetry::GrpcOutputHandler
         @stub = Opentelemetry::Proto::Collector::Trace::V1::TraceService::Stub.new(host, creds, **kw)
       end
 
-      def export(json)
+      def export(json, **kw)
         message = Opentelemetry::Proto::Collector::Trace::V1::ExportTraceServiceRequest.decode_json(json)
-        @stub.export(message)
+        @stub.export(message, **kw)
       end
     end
   end
@@ -70,7 +70,7 @@ class Fluent::Plugin::Opentelemetry::GrpcOutputHandler
     end
 
     begin
-      service.export(msg)
+      service.export(msg, deadline: Time.now + @grpc_config.timeout)
     rescue Google::Protobuf::ParseError => e
       # The message format does not comply with the OpenTelemetry protocol.
       raise ::Fluent::UnrecoverableError, e.message

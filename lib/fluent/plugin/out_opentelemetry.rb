@@ -53,6 +53,9 @@ module Fluent::Plugin
 
       desc "Compress request body"
       config_param :compress, :enum, list: %i[text gzip], default: :text
+
+      desc "The timeout in seconds"
+      config_param :timeout, :integer, default: 60
     end
 
     config_section :transport, required: false, multi: false, init: false, param_name: :transport_config do
