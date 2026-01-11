@@ -172,6 +172,7 @@ It needs to install `grpc` gem manually to use this feature.
 | parameter                       | type    | description                                                    | default          |
 |---------------------------------|---------|----------------------------------------------------------------|------------------|
 | endpoint                        | string  | The endpoint for gRPC request                                  | `127.0.0.1:4317` |
+| timeout                         | integer | The maximum time (seconds) to wait a response from the server  | `60`             |
 
 | parameter | type   | description                               | available values | default |
 |-----------|--------|-------------------------------------------|------------------|---------|

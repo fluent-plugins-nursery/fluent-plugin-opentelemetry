@@ -14,27 +14,33 @@ if defined?(GRPC)
   class Fluent::Plugin::OpentelemetryOutputGrpcTest < Test::Unit::TestCase
     class LogService < Opentelemetry::Proto::Collector::Logs::V1::LogsService::Service
       attr_reader :received
+      attr_accessor :sleep_to_response
 
       def export(req, _call)
         @received = req
+        sleep(@sleep_to_response) if @sleep_to_response
         Fluent::Plugin::Opentelemetry::Response::Logs.build
       end
     end
 
     class MetricsService < Opentelemetry::Proto::Collector::Metrics::V1::MetricsService::Service
       attr_reader :received
+      attr_accessor :sleep_to_response
 
       def export(req, _call)
         @received = req
+        sleep(@sleep_to_response) if @sleep_to_response
         Fluent::Plugin::Opentelemetry::Response::Metrics.build
       end
     end
 
     class TraceService < Opentelemetry::Proto::Collector::Trace::V1::TraceService::Service
       attr_reader :received
+      attr_accessor :sleep_to_response
 
       def export(req, _call)
         @received = req
+        sleep(@sleep_to_response) if @sleep_to_response
         Fluent::Plugin::Opentelemetry::Response::Traces.build
       end
     end
@@ -52,6 +58,8 @@ if defined?(GRPC)
       @trace_service = TraceService.new
       @grpc_server.handle(@trace_service)
 
+      @grpc_server_thread_status << :started
+
       @grpc_server.run_till_terminated
     end
 
@@ -64,15 +72,19 @@ if defined?(GRPC)
       @received_metrics_record = nil
       @received_traces_record = nil
 
-      @@grpc_server_thread = Thread.new do
+      @grpc_server_thread_status = Queue.new
+      @grpc_server_thread = Thread.new do
         run_grpc_server
       end
+
+      # Wait to launch grpc server
+      @grpc_server_thread_status.pop
     end
 
     def teardown
       @grpc_server.stop
-      @@grpc_server_thread.kill
-      @@grpc_server_thread = nil
+      @grpc_server_thread.kill
+      @grpc_server_thread = nil
     end
 
     def create_driver(conf = config)
@@ -136,6 +148,28 @@ if defined?(GRPC)
 
       assert_equal(TestData::JSON::METRICS, @metrics_service.received.to_json)
       assert_equal(:gzip, d.instance.grpc_config.compress)
+    end
+
+    def test_timeout_raise_deadline_exceeded
+      event = { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_METRICS, "message" => TestData::JSON::METRICS }
+
+      d = create_driver <<~"CONFIG"
+        <grpc>
+          endpoint "127.0.0.1:#{@port}"
+          timeout 1s
+        </grpc>
+      CONFIG
+
+      @metrics_service.sleep_to_response = 10
+
+      assert_raise(GRPC::DeadlineExceeded) do
+        d.run(default_tag: "opentelemetry.test", timeout: 10, shutdown: false) do
+          d.feed(event)
+        end
+        sleep 0.5
+      end
+    ensure
+      d.instance_shutdown
     end
   end
 end
