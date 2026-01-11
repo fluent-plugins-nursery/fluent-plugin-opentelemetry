@@ -3,9 +3,9 @@ Ref. https://github.com/open-telemetry/opentelemetry-proto/blob/main/docs/specif
 
 # Protocol Details
 ## OTLP/gRPC
-- [ ] [MUST] All server components MUST support the following transport compression options:
-  - [ ] [MUST] No compression, denoted by none.
-  - [ ] [MUST] Gzip compression, denoted by gzip.
+- [x] [MUST] All server components MUST support the following transport compression options:
+  - [x] [MUST] No compression, denoted by none.
+  - [x] [MUST] Gzip compression, denoted by gzip.
 
 ### OTLP/gRPC Concurrent Requests
 - [ ] [SHOULD] The implementations that need to achieve high throughput SHOULD support concurrent Unary calls to achieve higher throughput.
@@ -17,7 +17,7 @@ Ref. https://github.com/open-telemetry/opentelemetry-proto/blob/main/docs/specif
 - Full Success
   - [x] [MUST] On success, the server response MUST be a Export<signal>ServiceResponse message.
   - [x] [MUST] The server MUST leave the partial_success field unset in case of a successful response.
-  - [ ] [SHOULD] If the server receives an empty request the server SHOULD respond with success.
+  - [x] [SHOULD] If the server receives an empty request the server SHOULD respond with success.
 - Partial Success (NOTE: Currentry, it does not support partially accepting)
   - [ ] [MUST] The server response MUST be the same Export<signal>ServiceResponse message as in the Full Success case.
   - [ ] [MUST] The server MUST initialize the partial_success field, and it MUST set the respective rejected_spans, rejected_data_points, rejected_log_records or rejected_profiles field with the number of spans/data points/log records/profiles it rejected.
