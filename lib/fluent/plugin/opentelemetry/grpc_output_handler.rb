@@ -51,23 +51,20 @@ class Fluent::Plugin::Opentelemetry::GrpcOutputHandler
     @transport_config = transport_config
     @logger = logger
 
-    @channel_args = {}
-    @channel_args = GRPC::Core::CompressionOptions.new({ default_algorithm: :gzip }).to_channel_arg_hash if @grpc_config.compress == :gzip
+    channel_args = {}
+    channel_args = GRPC::Core::CompressionOptions.new({ default_algorithm: :gzip }).to_channel_arg_hash if @grpc_config.compress == :gzip
+    @services = {
+      Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS => ServiceStub::Logs.new(@grpc_config.endpoint, :this_channel_is_insecure, channel_args: channel_args),
+      Fluent::Plugin::Opentelemetry::RECORD_TYPE_METRICS => ServiceStub::Metrics.new(@grpc_config.endpoint, :this_channel_is_insecure, channel_args: channel_args),
+      Fluent::Plugin::Opentelemetry::RECORD_TYPE_TRACES => ServiceStub::Traces.new(@grpc_config.endpoint, :this_channel_is_insecure, channel_args: channel_args)
+    }
   end
 
   def export(record)
     msg = record["message"]
 
-    credential = :this_channel_is_insecure
-
-    case record["type"]
-    when Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS
-      service = ServiceStub::Logs.new(@grpc_config.endpoint, credential, channel_args: @channel_args)
-    when Fluent::Plugin::Opentelemetry::RECORD_TYPE_METRICS
-      service = ServiceStub::Metrics.new(@grpc_config.endpoint, credential, channel_args: @channel_args)
-    when Fluent::Plugin::Opentelemetry::RECORD_TYPE_TRACES
-      service = ServiceStub::Traces.new(@grpc_config.endpoint, credential, channel_args: @channel_args)
-    end
+    service = @services[record["type"]]
+    raise ::Fluent::UnrecoverableError, "got unknown record type '#{record['type']}'" unless service
 
     begin
       service.export(msg, deadline: Time.now + @grpc_config.timeout)
