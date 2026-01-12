@@ -15,13 +15,16 @@ end
 
 task default: :test
 
+# Ref. https://github.com/open-telemetry/opentelemetry-proto/releases
+OTLP_VERSION = "v1.9.0"
+
 desc "Regenerate 'lib/opentelemetry'"
 task :"regenerate:opentelemetry" do
   lib_path = File.expand_path("lib/opentelemetry")
 
   rm_rf lib_path
   cd Dir.tmpdir do
-    sh "git clone https://github.com/open-telemetry/opentelemetry-proto.git --depth 1"
+    sh "git clone --depth 1 --branch #{OTLP_VERSION} https://github.com/open-telemetry/opentelemetry-proto.git"
     cd "opentelemetry-proto" do
       files = Dir.glob("opentelemetry/**/*.proto")
 
