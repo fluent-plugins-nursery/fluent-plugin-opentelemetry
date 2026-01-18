@@ -15,7 +15,8 @@
 
 'use strict';
 
-const { BasicTracerProvider, ConsoleSpanExporter, SimpleSpanProcessor } = require('@opentelemetry/sdk-trace-base');
+const { NodeTracerProvider } = require('@opentelemetry/sdk-trace-node');
+const { ConsoleSpanExporter, SimpleSpanProcessor } = require('@opentelemetry/sdk-trace-base');
 const { Resource } = require('@opentelemetry/resources');
 const { SemanticResourceAttributes } = require('@opentelemetry/semantic-conventions');
 const {
@@ -30,16 +31,18 @@ const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-proto'
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
 
 const exporter = new OTLPTraceExporter({
-	url: "http://fluentd:4318/v1/traces"
+    url: "http://fluentd:4318/v1/traces"
 });
 
-const provider = new BasicTracerProvider({
+const provider = new NodeTracerProvider({
   resource: new Resource({
     [SemanticResourceAttributes.SERVICE_NAME]: 'basic-service',
   }),
 });
+
 provider.addSpanProcessor(new SimpleSpanProcessor(exporter));
 provider.addSpanProcessor(new SimpleSpanProcessor(new ConsoleSpanExporter()));
+
 provider.register();
 
 const tracer = trace.getTracer('example-otlp-exporter-node');
@@ -53,7 +56,9 @@ setInterval(() => {
   parentSpan.end();
 }, 5000);
 
-//exporter.shutdown();
+// process.on('SIGTERM', () => {
+//   provider.shutdown().then(() => console.log('Tracing terminated'));
+// });
 
 function doWork(parent) {
   // Start a child span

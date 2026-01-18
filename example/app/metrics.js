@@ -17,14 +17,16 @@
 
 const { DiagConsoleLogger, DiagLogLevel, diag } = require('@opentelemetry/api');
 const { OTLPMetricExporter } = require('@opentelemetry/exporter-metrics-otlp-proto');
-const { MeterProvider, PeriodicExportingMetricReader } = require('@opentelemetry/sdk-metrics-base');
+const { MeterProvider, PeriodicExportingMetricReader } = require('@opentelemetry/sdk-metrics');
 const { Resource } = require('@opentelemetry/resources');
 const { SemanticResourceAttributes } = require('@opentelemetry/semantic-conventions');
 
 // Optional and only needed to see the internal diagnostic logging (during development)
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
 
-const metricExporter = new OTLPMetricExporter({'url':'http://fluentd:4318/v1/metrics'});
+const metricExporter = new OTLPMetricExporter({
+  url: 'http://fluentd:4318/v1/metrics'
+});
 
 const meterProvider = new MeterProvider({
   resource: new Resource({
