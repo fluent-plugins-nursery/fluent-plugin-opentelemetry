@@ -139,6 +139,11 @@ To output the data, it requires to use output `opentelemetry` plugin.
 </match>
 ```
 
+> [!TIP]
+> To visualize Fluentd CPU usage (`process_cpu_time`), use the `rate()` function since the CPU metric is reported as cumulative time (Counter).
+>
+> **PromQL Example:** `rate(fluentd_process_cpu_time_seconds_total[$__rate_interval])`
+
 ### Output `opentelemetry` plugin
 
 To send data, this plugin requires `<http>` or `<grpc>` section.

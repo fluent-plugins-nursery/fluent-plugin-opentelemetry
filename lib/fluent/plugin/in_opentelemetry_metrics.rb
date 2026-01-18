@@ -6,6 +6,7 @@ require "fluent/plugin/opentelemetry/version"
 require "fluent/plugin_helper/timer"
 require "fluent/version"
 
+require "get_process_mem"
 require "json"
 require "socket"
 
@@ -49,6 +50,7 @@ module Fluent::Plugin
         @metric_name_prefix = metric_name_prefix.to_s
         @hostname = Socket.gethostname
         @monitor_info = MonitorInfo.new
+        @memory = GetProcessMem.new
       end
 
       def record
@@ -125,8 +127,44 @@ module Fluent::Plugin
             }
           end
         end
+        metrics.concat(process_metrics(time_nano_sec))
 
         metrics
+      end
+
+      def process_metrics(time_nano_sec)
+        [
+          {
+            "name" => @metric_name_prefix + "process_memory_usage",
+            "unit" => "By",
+            "gauge" => {
+              "dataPoints" => [
+                {
+                  "startTimeUnixNano" => @start_time_unix_nano,
+                  "timeUnixNano" => time_nano_sec,
+                  "asInt" => @memory.bytes.to_i,
+                  "attributes" => [string_value_attribute("type", "resident")]
+                }
+              ]
+            }
+          },
+          {
+            "name" => @metric_name_prefix + "process_cpu_time",
+            "unit" => "s",
+            "sum" => {
+              "aggregationTemporality" => 2, # CUMULATIVE
+              "isMonotonic" => true,
+              "dataPoints" => [
+                {
+                  "startTimeUnixNano" => @start_time_unix_nano,
+                  "timeUnixNano" => time_nano_sec,
+                  "asDouble" => Process.times.utime.to_f,
+                  "attributes" => [string_value_attribute("state", "user")]
+                }
+              ]
+            }
+          }
+        ]
       end
 
       def plugin_name(category, type)
