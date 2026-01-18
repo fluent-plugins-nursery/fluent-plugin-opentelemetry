@@ -14,25 +14,32 @@ class Fluent::Plugin::Opentelemetry::HttpOutputHandler
     @transport_config = transport_config
     @logger = logger
 
-    @tls_settings = {}
-    if @transport_config.protocol == :tls
-      @tls_settings[:client_cert] = @transport_config.cert_path
-      @tls_settings[:client_key] = @transport_config.private_key_path
-      @tls_settings[:client_key_pass] = @transport_config.private_key_passphrase
-      @tls_settings[:ssl_min_version] = Fluent::Plugin::Opentelemetry::TLS_VERSIONS_MAP[@transport_config.min_version]
-      @tls_settings[:ssl_max_version] = Fluent::Plugin::Opentelemetry::TLS_VERSIONS_MAP[@transport_config.max_version]
+    tls_settings = {}
+    if transport_config.protocol == :tls
+      tls_settings[:client_cert] = @transport_config.cert_path
+      tls_settings[:client_key] = @transport_config.private_key_path
+      tls_settings[:client_key_pass] = @transport_config.private_key_passphrase
+      tls_settings[:ssl_min_version] = Fluent::Plugin::Opentelemetry::TLS_VERSIONS_MAP[@transport_config.min_version]
+      tls_settings[:ssl_max_version] = Fluent::Plugin::Opentelemetry::TLS_VERSIONS_MAP[@transport_config.max_version]
     end
 
-    @timeout_settings = {
+    timeout_settings = {
       read_timeout: http_config.read_timeout,
       write_timeout: http_config.write_timeout,
       connect_timeout: http_config.connect_timeout
     }
+
+    Excon.defaults[:ssl_verify_peer] = false if @transport_config.insecure
+    @connections = {
+      Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS => Excon.new(http_logs_endpoint, proxy: @http_config.proxy, persistent: true, **tls_settings, **timeout_settings),
+      Fluent::Plugin::Opentelemetry::RECORD_TYPE_METRICS => Excon.new(http_metrics_endpoint, proxy: @http_config.proxy, persistent: true, **tls_settings, **timeout_settings),
+      Fluent::Plugin::Opentelemetry::RECORD_TYPE_TRACES => Excon.new(http_traces_endpoint, proxy: @http_config.proxy, persistent: true, **tls_settings, **timeout_settings)
+    }
   end
 
   def export(record)
-    uri, connection = create_http_connection(record)
-    response = connection.post
+    uri, headers, body = get_post_data(record)
+    response = @connections[record["type"]].post(body: body, headers: headers, idempotent: true)
 
     return if response.status >= 200 && response.status < 300
 
@@ -65,7 +72,7 @@ class Fluent::Plugin::Opentelemetry::HttpOutputHandler
     "#{@http_config.endpoint}/v1/traces"
   end
 
-  def create_http_connection(record)
+  def get_post_data(record)
     msg = record["message"]
 
     begin
@@ -93,8 +100,6 @@ class Fluent::Plugin::Opentelemetry::HttpOutputHandler
       body = gz.close.string
     end
 
-    Excon.defaults[:ssl_verify_peer] = false if @transport_config.insecure
-    connection = Excon.new(uri, body: body, headers: headers, proxy: @http_config.proxy, persistent: true, **@tls_settings, **@timeout_settings)
-    [uri, connection]
+    [uri, headers, body]
   end
 end
