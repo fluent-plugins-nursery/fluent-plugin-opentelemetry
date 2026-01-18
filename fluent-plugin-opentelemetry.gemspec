@@ -32,5 +32,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency("async-http", "~> 0.88")
   spec.add_dependency("excon", "~> 1.2")
   spec.add_dependency("fluentd", "~> 1.18")
+  spec.add_dependency("get_process_mem", "~> 1.0")
   spec.add_dependency("google-protobuf", "~> 4.30")
+  spec.add_dependency("sys-proctable", "~> 1.3")
 end
