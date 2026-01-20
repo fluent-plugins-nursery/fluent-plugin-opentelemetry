@@ -6,24 +6,32 @@ require "fluent/plugin/opentelemetry/response"
 require "google/protobuf"
 require "zlib"
 
-unless Fluent::PluginHelper::HttpServer::Request.method_defined?(:headers)
-  # This API was introduced at fluentd v1.19.0.
-  # Ref. https://github.com/fluent/fluentd/pull/4903
-  # If we have supported v1.19.0+ only, we can remove this patch.
-  module Fluent::PluginHelper::HttpServer
-    module Extension
-      refine Request do
+module Fluent::PluginHelper::HttpServer
+  module Extension
+    refine Request do
+      # This API was introduced at fluentd v1.19.0.
+      # Ref. https://github.com/fluent/fluentd/pull/4903
+      # If we have supported v1.19.0+ only, we can remove this patch.
+      unless method_defined?(:headers)
         def headers
           @request.headers
         end
       end
+
+      # Workaround for fluentd v1.19.1 or earlier which does not close request body.
+      # Ref. https://github.com/fluent/fluentd/pull/5231
+      unless method_defined?(:close)
+        def close
+          @request.body&.close
+        end
+      end
     end
   end
-
-  using Fluent::PluginHelper::HttpServer::Extension
 end
 
 class Fluent::Plugin::Opentelemetry::HttpInputHandler
+  using Fluent::PluginHelper::HttpServer::Extension
+
   def logs(req, &block)
     common(req, Fluent::Plugin::Opentelemetry::Request::Logs, Fluent::Plugin::Opentelemetry::Response::Logs, &block)
   end
@@ -41,10 +49,10 @@ class Fluent::Plugin::Opentelemetry::HttpInputHandler
   def common(req, request_class, response_class)
     content_type = req.headers["content-type"]
     content_encoding = req.headers["content-encoding"]&.first
+    body = req.body
     return response_unsupported_media_type unless valid_content_type?(content_type)
     return response_bad_request(content_type) unless valid_content_encoding?(content_encoding)
 
-    body = req.body
     body = Zlib::GzipReader.new(StringIO.new(body)).read if content_encoding == Fluent::Plugin::Opentelemetry::CONTENT_ENCODING_GZIP
 
     begin
@@ -58,6 +66,8 @@ class Fluent::Plugin::Opentelemetry::HttpInputHandler
 
     res = response_class.new
     response(200, content_type, res.body(type: Fluent::Plugin::Opentelemetry::Response.type(content_type)))
+  ensure
+    req.close
   end
 
   def valid_content_type?(content_type)
