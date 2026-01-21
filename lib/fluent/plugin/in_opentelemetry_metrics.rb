@@ -143,7 +143,10 @@ module Fluent::Plugin
                   "startTimeUnixNano" => @start_time_unix_nano,
                   "timeUnixNano" => time_nano_sec,
                   "asInt" => @memory.bytes.to_i,
-                  "attributes" => [string_value_attribute("type", "resident")]
+                  "attributes" => [
+                    string_value_attribute("type", "resident"),
+                    int_value_attribute("process.pid", Process.pid)
+                  ]
                 }
               ]
             }
@@ -159,7 +162,10 @@ module Fluent::Plugin
                   "startTimeUnixNano" => @start_time_unix_nano,
                   "timeUnixNano" => time_nano_sec,
                   "asDouble" => Process.times.utime.to_f,
-                  "attributes" => [string_value_attribute("state", "user")]
+                  "attributes" => [
+                    string_value_attribute("state", "user"),
+                    int_value_attribute("process.pid", Process.pid)
+                  ]
                 }
               ]
             }
