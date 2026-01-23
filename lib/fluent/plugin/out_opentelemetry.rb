@@ -81,17 +81,13 @@ module Fluent::Plugin
       true
     end
 
-    def format(tag, time, record)
-      JSON.generate(record)
-    end
-
     def write(chunk)
-      record = JSON.parse(chunk.read)
-
-      if @grpc_handler
-        @grpc_handler.export(record)
-      else
-        @http_handler.export(record)
+      chunk.each do |_, record| # rubocop:disable Style/HashEachMethods
+        if @grpc_handler
+          @grpc_handler.export(record)
+        else
+          @http_handler.export(record)
+        end
       end
     end
   end
