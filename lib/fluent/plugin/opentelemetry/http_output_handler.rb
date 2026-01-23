@@ -41,6 +41,10 @@ class Fluent::Plugin::Opentelemetry::HttpOutputHandler
     uri, headers, body = get_post_data(record)
     response = @connections[record["type"]].post(body: body, headers: headers, idempotent: true)
 
+    # Explicitly consume the response body to clear the socket buffer.
+    # Without this, Excon retains the buffer, causing memory leaks and blocking persistent connections.
+    response.body
+
     return if response.status >= 200 && response.status < 300
 
     if response.status == 400
