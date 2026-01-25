@@ -23,7 +23,7 @@ module Fluent::Plugin
     config_param :tag, :string
 
     desc "The prefix of metric name."
-    config_param :metric_name_prefix, :string, default: "fluentd_"
+    config_param :metric_name_prefix, :string, default: "fluentd."
 
     def start
       super
@@ -111,7 +111,7 @@ module Fluent::Plugin
             next unless value.is_a?(Numeric)
 
             metrics << {
-              "name" => @metric_name_prefix + key.to_s,
+              "name" => replace_metrics_name_separator(@metric_name_prefix + key.to_s),
               "unit" => "1",
               # TODO: "description"
               "gauge" => {
@@ -135,7 +135,7 @@ module Fluent::Plugin
       def process_metrics(time_nano_sec)
         [
           {
-            "name" => @metric_name_prefix + "process_memory_usage",
+            "name" => replace_metrics_name_separator(@metric_name_prefix + "process.memory.usage"),
             "unit" => "By",
             "gauge" => {
               "dataPoints" => [
@@ -152,7 +152,7 @@ module Fluent::Plugin
             }
           },
           {
-            "name" => @metric_name_prefix + "process_cpu_time",
+            "name" => replace_metrics_name_separator(@metric_name_prefix + "process.cpu.time"),
             "unit" => "s",
             "sum" => {
               "aggregationTemporality" => 2, # CUMULATIVE
@@ -203,6 +203,10 @@ module Fluent::Plugin
             "intValue" => value
           }
         }
+      end
+
+      def replace_metrics_name_separator(name)
+        name.tr("_", ".")
       end
     end
 
