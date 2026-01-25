@@ -117,7 +117,7 @@ To output the data, it requires to use output `opentelemetry` plugin.
 |--------------------|--------|-------------------------------------------------------|-------------|
 | tag                | string | The tag of the event                                  | required    |
 | emit_interval      | time   | Determine the rate to emit internal metrics as events | `60`        |
-| metric_name_prefix | string | The prefix of metric name                             | `fluentd_`  |
+| metric_name_prefix | string | The prefix of metric name                             | `fluentd.`  |
 
 #### Example
 

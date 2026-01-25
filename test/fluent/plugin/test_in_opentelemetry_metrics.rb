@@ -91,7 +91,7 @@ class Fluent::Plugin::OpentelemetryMetricsInputTest < Test::Unit::TestCase
   end
 
   def test_metrics_record_conforms_to_spec
-    metrics = Fluent::Plugin::OpentelemetryMetricsInput::Metrics.new(metric_name_prefix: "fluentd_")
+    metrics = Fluent::Plugin::OpentelemetryMetricsInput::Metrics.new(metric_name_prefix: "fluentd.")
 
     # validate the metrics record
     assert_nothing_raised do
@@ -115,13 +115,26 @@ class Fluent::Plugin::OpentelemetryMetricsInputTest < Test::Unit::TestCase
   end
 
   def test_metrics_name_prefix
-    d = create_driver(config + "metric_name_prefix foobarbaz_")
+    d = create_driver(config + "metric_name_prefix foobarbaz.")
     d.run(expect_records: 1)
 
     event = d.events.first
     record = JSON.parse(event[2]["message"])
 
     metrics = record["resourceMetrics"][0]["scopeMetrics"][0]["metrics"]
-    assert_true(metrics.all? { |metric| metric["name"].start_with?("foobarbaz_") })
+    assert_true(metrics.all? { |metric| metric["name"].start_with?("foobarbaz.") })
+  end
+
+  def test_metrics_name_separator
+    d = create_driver
+    d.run(expect_records: 1)
+
+    event = d.events.first
+    record = JSON.parse(event[2]["message"])
+
+    metrics = record["resourceMetrics"][0]["scopeMetrics"][0]["metrics"]
+    metrics.each do |metric|
+      assert_true(metric["name"].match?(/\A[a-zA-Z0-9]+(\.[a-zA-Z0-9]+)+\z/))
+    end
   end
 end
