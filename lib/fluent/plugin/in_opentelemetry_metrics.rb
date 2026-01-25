@@ -101,10 +101,10 @@ module Fluent::Plugin
 
         @monitor_info.plugins_info_all.each do |record|
           attributes = {
-            plugin_id: record["plugin_id"],
-            plugin: plugin_name(record["plugin_category"], record["type"]),
-            plugin_category: record["plugin_category"],
-            plugin_type: record["type"]
+            "plugin.id" => record["plugin_id"],
+            "plugin" => plugin_name(record["plugin_category"], record["type"]),
+            "plugin.category" => record["plugin_category"],
+            "plugin.type" => record["type"]
           }.map { |k, v| string_value_attribute(k, v) }
 
           record.each do |key, value|
