@@ -53,6 +53,9 @@ class Fluent::Plugin::Opentelemetry::GrpcOutputHandler
 
     channel_args = {}
     channel_args = GRPC::Core::CompressionOptions.new({ default_algorithm: :gzip }).to_channel_arg_hash if @grpc_config.compress == :gzip
+    channel_args["grpc.keepalive_time_ms"] = grpc_config.keepalive_time * 1000
+    channel_args["grpc.keepalive_timeout_ms"] = grpc_config.keepalive_timeout * 1000
+    channel_args["grpc.keepalive_permit_without_calls"] = 1
     @services = {
       Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS => ServiceStub::Logs.new(@grpc_config.endpoint, :this_channel_is_insecure, channel_args: channel_args),
       Fluent::Plugin::Opentelemetry::RECORD_TYPE_METRICS => ServiceStub::Metrics.new(@grpc_config.endpoint, :this_channel_is_insecure, channel_args: channel_args),

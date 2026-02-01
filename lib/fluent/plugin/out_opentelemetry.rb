@@ -56,6 +56,12 @@ module Fluent::Plugin
 
       desc "The timeout in seconds"
       config_param :timeout, :integer, default: 60
+
+      desc "The interval in seconds to send gRPC keepalive pings."
+      config_param :keepalive_time, :integer, default: 30
+
+      desc "The timeout in seconds to wait for a keepalive ping acknowledgement."
+      config_param :keepalive_timeout, :integer, default: 10
     end
 
     config_section :transport, required: false, multi: false, init: false, param_name: :transport_config do
