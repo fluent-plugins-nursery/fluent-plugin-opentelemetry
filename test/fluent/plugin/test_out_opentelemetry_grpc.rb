@@ -171,5 +171,36 @@ if defined?(GRPC)
     ensure
       d.instance_shutdown
     end
+
+    sub_test_case "gRPC keepalive settings" do
+      def test_default_keepalive_settings
+        stub(::Opentelemetry::Proto::Collector::Logs::V1::LogsService::Stub).new.with_any_args do |_endpoint, _creds, **options|
+          channel_args = options[:channel_args]
+
+          assert_equal(30_000, channel_args["grpc.keepalive_time_ms"])
+          assert_equal(10_000, channel_args["grpc.keepalive_timeout_ms"])
+          assert_equal(1, channel_args["grpc.keepalive_permit_without_calls"])
+        end
+
+        create_driver
+      end
+
+      def test_custom_keepalive_settings
+        stub(::Opentelemetry::Proto::Collector::Logs::V1::LogsService::Stub).new.with_any_args do |_endpoint, _creds, **options|
+          channel_args = options[:channel_args]
+
+          assert_equal 60_000, channel_args["grpc.keepalive_time_ms"]
+          assert_equal 5_000, channel_args["grpc.keepalive_timeout_ms"]
+        end
+
+        create_driver <<~"CONFIG"
+          <grpc>
+            endpoint "127.0.0.1:#{@port}"
+            keepalive_time 60
+            keepalive_timeout 5
+          </grpc>
+        CONFIG
+      end
+    end
   end
 end
