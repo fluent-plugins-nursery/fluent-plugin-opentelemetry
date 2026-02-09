@@ -1,5 +1,11 @@
 ## [Unreleased]
 
+## [0.5.1] - 2026-02-09
+
+Fixes:
+
+- gem: add win32ole gem as dependency for Ruby 4.0 (#30)
+
 ## [0.5.0] - 2026-02-01
 
 Improvements:
