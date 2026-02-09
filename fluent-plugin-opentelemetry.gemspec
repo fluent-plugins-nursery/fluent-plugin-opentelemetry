@@ -35,4 +35,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency("get_process_mem", "~> 1.0")
   spec.add_dependency("google-protobuf", "~> 4.30")
   spec.add_dependency("sys-proctable", "~> 1.3")
+  spec.add_dependency("win32ole", "~> 1.9") if Gem.win_platform?
 end
