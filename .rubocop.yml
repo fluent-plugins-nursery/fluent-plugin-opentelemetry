@@ -78,6 +78,9 @@ Style/MixinUsage:
 Style/NumericLiterals:
   Enabled: false
 
+Style/OneClassPerFile:
+  Enabled: false
+
 Style/PercentLiteralDelimiters:
   Enabled: false
 
