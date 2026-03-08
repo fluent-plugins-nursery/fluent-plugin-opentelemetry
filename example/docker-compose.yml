@@ -4,14 +4,12 @@ services:
   demo_app:
     build:
       context: app
-    container_name: demo_app
     depends_on:
       - jaeger
 
   fluentd:
     build:
       context: fluentd
-    container_name: fluentd
     volumes:
     - "./fluentd/fluent.conf:/fluentd/etc/fluent.conf"
     depends_on:
@@ -20,7 +18,6 @@ services:
 
   prometheus:
     image: prom/prometheus
-    container_name: prometheus
     volumes:
       - ./prometheus:/etc/prometheus
       - prometheus-data:/prometheus
@@ -30,7 +27,6 @@ services:
 
   grafana:
     image: grafana/grafana
-    container_name: grafana
     ports:
       - "3000:3000"
     volumes:
@@ -41,8 +37,6 @@ services:
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.17.1
-    container_name: elasticsearch
-    hostname: elasticsearch
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false # Disable security for testing
@@ -54,7 +48,6 @@ services:
 
   jaeger:
     image: jaegertracing/all-in-one:1.35
-    container_name: jaeger
     environment:
       - COLLECTOR_OTLP_ENABLED=true
     ports:
@@ -62,7 +55,6 @@ services:
 
   collector:
     image: otel/opentelemetry-collector-contrib
-    container_name: collector
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
       - ./collector/otel-collector-config.yaml:/etc/otel-collector-config.yaml
