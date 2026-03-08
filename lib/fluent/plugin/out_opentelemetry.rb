@@ -88,12 +88,46 @@ module Fluent::Plugin
     end
 
     def write(chunk)
-      chunk.each do |_, record| # rubocop:disable Style/HashEachMethods
+      BatchProcessor.build_export_requests(chunk).each do |export_request|
         if @grpc_handler
-          @grpc_handler.export(record)
+          @grpc_handler.export(export_request)
         else
-          @http_handler.export(record)
+          @http_handler.export(export_request)
         end
+      end
+    end
+
+    class BatchProcessor
+      RESOURCE_KEY_MAP = {
+        Opentelemetry::RECORD_TYPE_LOGS => "resourceLogs",
+        Opentelemetry::RECORD_TYPE_METRICS => "resourceMetrics",
+        Opentelemetry::RECORD_TYPE_TRACES => "resourceSpans"
+      }.freeze
+
+      def self.build_export_requests(chunk)
+        requests = {
+          Opentelemetry::RECORD_TYPE_LOGS => {},
+          Opentelemetry::RECORD_TYPE_METRICS => {},
+          Opentelemetry::RECORD_TYPE_TRACES => {}
+        }
+
+        chunk.each do |_, record| # rubocop:disable Style/HashEachMethods
+          record_type = record["type"]
+          resource_key = RESOURCE_KEY_MAP[record_type]
+          record["message"] = JSON.parse(record["message"])
+          resource_hash = record["message"][resource_key][0]["resource"].hash
+          if requests[record_type][resource_hash].nil?
+            requests[record_type][resource_hash] = record
+          else
+            requests[record_type][resource_hash]["message"][resource_key].concat(record["message"][resource_key])
+          end
+        end
+
+        merged_records = requests.values.flat_map(&:values)
+        merged_records.each do |record|
+          record["message"] = record["message"].to_json
+        end
+        merged_records
       end
     end
   end
