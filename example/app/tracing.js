@@ -28,7 +28,7 @@ const {
 } = require('@opentelemetry/api');
 const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-proto');
 
-diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
+diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO);
 
 const exporter = new OTLPTraceExporter({
     url: "http://fluentd:4318/v1/traces"
