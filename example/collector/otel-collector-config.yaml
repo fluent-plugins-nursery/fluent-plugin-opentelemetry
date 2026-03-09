@@ -27,7 +27,9 @@ service:
     #   exporters: [debug, otlp]
     metrics:
       receivers: [otlp]
-      exporters: [debug, prometheus]
+      exporters: [prometheus]
+      # exporters: [debug, prometheus]
     logs:
       receivers: [otlp, fluentforward]
-      exporters: [debug, elasticsearch]
+      exporters: [elasticsearch]
+      # exporters: [debug, elasticsearch]
