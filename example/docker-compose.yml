@@ -6,6 +6,11 @@ services:
       context: app
     depends_on:
       - jaeger
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   fluentd:
     build:
@@ -58,6 +63,11 @@ services:
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
       - ./collector/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   prometheus-data:
