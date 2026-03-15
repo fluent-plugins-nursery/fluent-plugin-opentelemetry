@@ -21,8 +21,10 @@ module Fluent::Plugin
 
     helpers :server
 
+    DEFAULT_CHUNK_LIMIT_SIZE = 8 * 1024 * 1024 # 8MB
     config_section :buffer do
       config_set_default :chunk_keys, ["tag"]
+      config_set_default :chunk_limit_size, DEFAULT_CHUNK_LIMIT_SIZE
     end
 
     config_section :http, required: false, multi: false, init: false, param_name: :http_config do

@@ -24,8 +24,13 @@ class Fluent::Plugin::OpentelemetryOutputTest < Test::Unit::TestCase
       <http>
         endpoint "http://127.0.0.1:#{@port}"
       </http>
+      <buffer>
+        @type file
+        path /tmp
+      </buffer>
     ])
     assert_equal "http://127.0.0.1:#{@port}", d.instance.http_config.endpoint
+    assert_equal 8 * 1024 * 1024, d.instance.buffer.chunk_limit_size
 
     if defined?(GRPC)
       d = create_driver(%[

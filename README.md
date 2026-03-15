@@ -202,9 +202,15 @@ Refer [Config: Transport Section](https://docs.fluentd.org/configuration/transpo
 
 #### `<buffer>` section
 
-| parameter  | type   | description                                               | default |
-|------------|--------|-----------------------------------------------------------|---------|
-| chunk_keys | array  | Overwrites the default `chunk_keys` value in this plugin. | `tag`   |
+| parameter        | type    | description                                                     | default    |
+|------------------|---------|-----------------------------------------------------------------|------------|
+| chunk_keys       | array   | Overwrites the default `chunk_keys` value in this plugin.       | `tag`      |
+| chunk_limit_size | integer | Overwrites the default `chunk_limit_size` value in this plugin. | `8M` (8MB) |
+
+**Note on chunk_limit_size:**
+Currently, this plugin is reducing I/O load by combining data within a chunk and sending it as a single unit.
+Depending on the configuration of your OpenTelemetry Collector or downstream backend (e.g., maximum request body size limits), an 8MB chunk might be rejected with a `413 Payload Too Large` error.
+If you encounter this error in your Fluentd logs, please adjust (decrease) the `chunk_limit_size` in your `<buffer>` section.
 
 Refer [Config: Buffer Section](https://docs.fluentd.org/configuration/buffer-section)
 
