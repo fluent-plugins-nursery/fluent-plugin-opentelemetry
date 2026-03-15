@@ -17,6 +17,10 @@ class Fluent::Plugin::OpentelemetryOutputHttpTest < Test::Unit::TestCase
     @@server_request
   end
 
+  def server_requests
+    @@server_requests
+  end
+
   def server_response_code(code)
     @@server_response_code = code
   end
@@ -33,14 +37,17 @@ class Fluent::Plugin::OpentelemetryOutputHttpTest < Test::Unit::TestCase
     server = ::WEBrick::HTTPServer.new(server_config)
     server.mount_proc("/v1/metrics") do |req, res|
       @@server_request = ServerRequest.new(req.request_method.dup, req.path.dup, req.header.dup, req.body.dup)
+      @@server_requests << @@server_request
       res.status = @@server_response_code
     end
     server.mount_proc("/v1/traces") do |req, res|
       @@server_request = ServerRequest.new(req.request_method.dup, req.path.dup, req.header.dup, req.body.dup)
+      @@server_requests << @@server_request
       res.status = @@server_response_code
     end
     server.mount_proc("/v1/logs") do |req, res|
       @@server_request = ServerRequest.new(req.request_method.dup, req.path.dup, req.header.dup, req.body.dup)
+      @@server_requests << @@server_request
       res.status = @@server_response_code
     end
     server.start
@@ -57,6 +64,7 @@ class Fluent::Plugin::OpentelemetryOutputHttpTest < Test::Unit::TestCase
 
     @port = unused_tcp_port
 
+    @@server_requests = []
     @@server_request = nil
     @@server_response_code = 200
     @@http_server_thread = Thread.new do
@@ -276,6 +284,80 @@ class Fluent::Plugin::OpentelemetryOutputHttpTest < Test::Unit::TestCase
       assert_equal("POST", server_request.request_method)
       assert_equal(["application/x-protobuf"], server_request.header["content-type"])
       assert_equal(TestData::ProtocolBuffers::LOGS, server_request.body)
+    end
+  end
+
+  sub_test_case "Bulk Export (BatchProcessor)" do
+    def config
+      <<~"CONFIG"
+        <http>
+          endpoint "http://127.0.0.1:#{@port}"
+        </http>
+      CONFIG
+    end
+
+    def test_send_groups_records
+      events = [
+        { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS, "message" => TestData::JSON::LOGS },
+        { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS, "message" => TestData::JSON::LOGS },
+        { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_METRICS, "message" => TestData::JSON::METRICS },
+        { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_METRICS, "message" => TestData::JSON::METRICS },
+        { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_METRICS, "message" => TestData::JSON::METRICS },
+        { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_TRACES, "message" => TestData::JSON::TRACES },
+        { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_TRACES, "message" => TestData::JSON::TRACES },
+        { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_TRACES, "message" => TestData::JSON::TRACES },
+        { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_TRACES, "message" => TestData::JSON::TRACES }
+      ]
+
+      d = create_driver
+      d.run(default_tag: "opentelemetry.test") do
+        events.each do |event|
+          d.feed(event)
+        end
+      end
+
+      assert_equal(3, server_requests.size)
+      request = Opentelemetry::Proto::Collector::Logs::V1::ExportLogsServiceRequest.decode(server_requests[0].body)
+      assert_equal(2, request.resource_logs.size)
+      request = Opentelemetry::Proto::Collector::Metrics::V1::ExportMetricsServiceRequest.decode(server_requests[1].body)
+      assert_equal(3, request.resource_metrics.size)
+      request = Opentelemetry::Proto::Collector::Trace::V1::ExportTraceServiceRequest.decode(server_requests[2].body)
+      assert_equal(4, request.resource_spans.size)
+    end
+
+    def test_send_different_resource
+      resource_a = { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS, "message" => JSON.parse(TestData::JSON::LOGS) }
+      resource_b = { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS, "message" => JSON.parse(TestData::JSON::LOGS) }
+      resource_a["message"]["resourceLogs"][0]["resource"]["attributes"] = [{
+        "key" => "service.name",
+        "value" => {
+          "stringValue" => "fluentd forwarder"
+        }
+      }]
+      resource_a["message"] = resource_a["message"].to_json
+
+      resource_b["message"]["resourceLogs"][0]["resource"]["attributes"] = [{
+        "key" => "service.name",
+        "value" => {
+          "stringValue" => "fluentd aggregator"
+        }
+      }]
+      resource_b["message"] = resource_b["message"].to_json
+
+      events = [resource_a, resource_b]
+
+      d = create_driver
+      d.run(default_tag: "opentelemetry.test") do
+        events.each do |event|
+          d.feed(event)
+        end
+      end
+
+      assert_equal(2, server_requests.size)
+      request = Opentelemetry::Proto::Collector::Logs::V1::ExportLogsServiceRequest.decode(server_requests[0].body)
+      assert_equal(1, request.resource_logs.size)
+      request = Opentelemetry::Proto::Collector::Logs::V1::ExportLogsServiceRequest.decode(server_requests[1].body)
+      assert_equal(1, request.resource_logs.size)
     end
   end
 
