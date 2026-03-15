@@ -1,5 +1,11 @@
 ## [Unreleased]
 
+## [0.5.2] - 2026-03-15
+
+Improvements:
+
+- out_opentelemetry: add BatchProcessor for bulk transfer (#33)
+
 ## [0.5.1] - 2026-02-09
 
 Fixes:
