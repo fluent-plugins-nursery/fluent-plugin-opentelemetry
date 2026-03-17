@@ -8,10 +8,13 @@ Ref. https://github.com/open-telemetry/opentelemetry-proto/blob/main/docs/specif
   - [x] [MUST] Gzip compression, denoted by gzip.
 
 ### OTLP/gRPC Concurrent Requests
-- [ ] [SHOULD] The implementations that need to achieve high throughput SHOULD support concurrent Unary calls to achieve higher throughput.
+- [x] [SHOULD] The implementations that need to achieve high throughput SHOULD support concurrent Unary calls to achieve higher throughput.
+   * NOTE: Supported by `flush_thread_count` settings in `<buffer>`.
 - [ ] [SHOULD] The client SHOULD send new requests without waiting for the response to the earlier sent requests, essentially creating a pipeline of requests that are currently in flight that are not acknowledged.
-- [ ] [SHOULD] The number of concurrent requests SHOULD be configurable.
-- [ ] [SHOULD] The client implementation SHOULD expose an option to turn on and off the waiting during a shutdown.
+- [x] [SHOULD] The number of concurrent requests SHOULD be configurable.
+   * NOTE: Supported by `flush_thread_count` settings in `<buffer>`.
+- [x] [SHOULD] The client implementation SHOULD expose an option to turn on and off the waiting during a shutdown.
+   * NOTE: Supported by `flush_at_shutdown` settings in `<buffer>`.
 
 ### OTLP/gRPC Response
 - Full Success
@@ -30,7 +33,8 @@ Ref. https://github.com/open-telemetry/opentelemetry-proto/blob/main/docs/specif
   - [ ] [SHOULD] Retryable errors indicate that telemetry data processing failed, and the client SHOULD record the error and may retry exporting the same data.
   - [ ] [SHOULD] The client SHOULD maintain a counter of such dropped data.
   - [ ] [SHOULD] The client SHOULD interpret gRPC status codes as retryable or not-retryable according to the following table.
-  - [ ] [SHOULD] When retrying, the client SHOULD implement an exponential backoff strategy.
+  - [x] [SHOULD] When retrying, the client SHOULD implement an exponential backoff strategy.
+     * NOTE: Fluentd's retry mechanism has `retry_type: exponential_backoff` by default.
   - [ ] [SHOULD] The client SHOULD interpret RESOURCE_EXHAUSTED code as retryable only if the server signals that the recovery from resource exhaustion is possible.
 
 ### OTLP/gRPC Throttling
@@ -91,18 +95,21 @@ Ref. https://github.com/open-telemetry/opentelemetry-proto/blob/main/docs/specif
 - OTLP/HTTP Throttling
   - [ ] [SHOULD] If the server receives more requests than the client is allowed or the server is overloaded, the server SHOULD respond with HTTP 429 Too Many Requests or HTTP 503 Service Unavailable.
   - [ ] [SHOULD] The client SHOULD honour the waiting interval specified in the "Retry-After" header if it is present.
-  - [ ] [SHOULD] The "Retry-After" header is not present in the response, then the client SHOULD implement an exponential backoff strategy between retries.
+  - [x] [SHOULD] The "Retry-After" header is not present in the response, then the client SHOULD implement an exponential backoff strategy between retries.
+    * NOTE: Fluentd's retry mechanism has `retry_type: exponential_backoff` by default.
 - All Other Responses
   - [x] [SHOULD] If the server disconnects without returning a response, the client SHOULD retry and send the same request.
   - [x] [SHOULD] The client SHOULD implement an exponential backoff strategy between retries to avoid overwhelming the server.
 
 ### OTLP/HTTP Connection
-- [ ] [SHOULD] If the client cannot connect to the server, the client SHOULD retry the connection using an exponential backoff strategy between retries.
-- [ ] [SHOULD] The client SHOULD keep the connection alive between requests.
+- [x] [SHOULD] If the client cannot connect to the server, the client SHOULD retry the connection using an exponential backoff strategy between retries.
+  * NOTE: Fluentd's retry mechanism has `retry_type: exponential_backoff` by default.
+- [x] [SHOULD] The client SHOULD keep the connection alive between requests.
 - [ ] [SHOULD] Server implementations SHOULD accept OTLP/HTTP with binary-encoded Protobuf payload and OTLP/HTTP with JSON-encoded Protobuf payload requests on the same port and multiplex the requests to the corresponding payload decoder based on the "Content-Type" request header.
 
 ### OTLP/HTTP Concurrent Requests
-- [ ] [SHOULD] To achieve higher total throughput, the client MAY send requests using several parallel HTTP connections. In that case, the maximum number of parallel connections SHOULD be configurable.
+- [x] [SHOULD] To achieve higher total throughput, the client MAY send requests using several parallel HTTP connections. In that case, the maximum number of parallel connections SHOULD be configurable.
+  * NOTE: Supported by `flush_thread_count` settings in `<buffer>`.
 
 # Future Versions and Interoperability
 - [ ] [MUST] When possible, the interoperability MUST be ensured between all versions of OTLP that are not declared obsolete.
