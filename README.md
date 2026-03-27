@@ -144,6 +144,19 @@ To output the data, it requires to use output `opentelemetry` plugin.
 >
 > **PromQL Example:** `rate(fluentd_process_cpu_time_seconds_total[$__rate_interval])`
 
+> [!NOTE]
+> **Process Metrics (CPU / Memory)**
+>
+> Fluentd operates on a multi-process architecture consisting of a Supervisor process and one or more Worker processes.
+>
+> Because this plugin runs inside a specific worker process, the process-level metrics it collects (such as CPU time and memory usage) represent **only the footprint of that single worker process**, not the total resource consumption of the entire Fluentd instance.
+>
+> If you are using a multi-worker configuration (`<system> workers N </system>`), be aware that the actual total CPU and memory usage of Fluentd will be higher than what this plugin reports.
+>
+> For accurate, instance-wide resource monitoring, we strongly recommend using external OS-level monitoring tools rather than relying on application-internal metrics:
+> * Container Environments (Kubernetes/Docker): Use tools like `cAdvisor` or `kube-state-metrics`, etc.
+> * VM/Bare-metal Environments: Use `node_exporter` combined with `process-exporter`, etc.
+
 ### Output `opentelemetry` plugin
 
 To send data, this plugin requires `<http>` or `<grpc>` section.
@@ -231,4 +244,3 @@ Refer [Config: Buffer Section](https://docs.fluentd.org/configuration/buffer-sec
 * Copyright(c) 2025- Shizuo Fujita
 * License
   * Apache License, Version 2.0
-
