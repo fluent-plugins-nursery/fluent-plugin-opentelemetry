@@ -58,7 +58,7 @@ module Fluent::Plugin
       super
 
       if @http_config
-        http_handler = Opentelemetry::HttpInputHandler.new
+        http_handler = Opentelemetry::HttpInputHandler.new(@http_config, log)
         http_server_create_http_server(:in_opentelemetry_http_server, addr: @http_config.bind, port: @http_config.port, logger: log) do |serv|
           serv.post("/v1/logs") do |req|
             http_handler.logs(req) { |record| router.emit(tag_for(Opentelemetry::RECORD_TYPE_LOGS), Fluent::EventTime.now, { "type" => Opentelemetry::RECORD_TYPE_LOGS, "message" => record }) }

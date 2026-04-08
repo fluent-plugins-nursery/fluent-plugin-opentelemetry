@@ -113,15 +113,6 @@ class Fluent::Plugin::OpentelemetryInputHttpTest < Test::Unit::TestCase
       assert_equal(expected_events, d.events)
     end
 
-    def test_invalid_json
-      d = create_driver
-      res = d.run(expect_records: 0) do
-        post_json("/v1/logs", TestData::JSON::INVALID)
-      end
-
-      assert_equal(400, res.status)
-    end
-
     data("metrics" => {
            request_path: "/v1/metrics",
            request_data: TestData::ProtocolBuffers::METRICS,
@@ -160,6 +151,25 @@ class Fluent::Plugin::OpentelemetryInputHttpTest < Test::Unit::TestCase
       expected_events = [["opentelemetry.test", @event_time, { "type" => "opentelemetry_logs", "message" => TestData::JSON::LOGS }]]
       assert_equal(200, res.status)
       assert_equal(expected_events, d.events)
+    end
+
+    def test_invalid_json
+      d = create_driver
+      res = d.run(expect_records: 0) do
+        post_json("/v1/logs", TestData::JSON::INVALID)
+      end
+
+      assert_equal(400, res.status)
+    end
+
+    def test_invalid_gzip_payload
+      d = create_driver
+      res = d.run(expect_records: 0) do
+        # Post plain JSON payload as gzip
+        post_json("/v1/logs", TestData::JSON::LOGS, headers: { "Content-Encoding" => "gzip" })
+      end
+
+      assert_equal(400, res.status)
     end
 
     def test_invalid_protocol_buffers
