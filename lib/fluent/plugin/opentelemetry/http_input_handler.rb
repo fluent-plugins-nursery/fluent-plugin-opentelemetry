@@ -32,6 +32,11 @@ end
 class Fluent::Plugin::Opentelemetry::HttpInputHandler
   using Fluent::PluginHelper::HttpServer::Extension
 
+  def initialize(http_config, logger)
+    @http_config = http_config
+    @logger = logger
+  end
+
   def logs(req, &block)
     common(req, Fluent::Plugin::Opentelemetry::Request::Logs, Fluent::Plugin::Opentelemetry::Response::Logs, &block)
   end
@@ -53,12 +58,20 @@ class Fluent::Plugin::Opentelemetry::HttpInputHandler
     return response_unsupported_media_type unless valid_content_type?(content_type)
     return response_bad_request(content_type) unless valid_content_encoding?(content_encoding)
 
-    body = Zlib::GzipReader.new(StringIO.new(body)).read if content_encoding == Fluent::Plugin::Opentelemetry::CONTENT_ENCODING_GZIP
+    if content_encoding == Fluent::Plugin::Opentelemetry::CONTENT_ENCODING_GZIP
+      begin
+        body = Zlib::GzipReader.new(StringIO.new(body)).read
+      rescue Zlib::Error => e
+        @logger.warn { "Failed to decompress gzip payload: #{e.message}" }
+        return response_bad_request(content_type)
+      end
+    end
 
     begin
       record = request_class.new(body).record
-    rescue Google::Protobuf::ParseError
+    rescue Google::Protobuf::ParseError => e
       # The format in request body does not comply with the OpenTelemetry protocol.
+      @logger.warn { "Failed to parse OpenTelemetry payload: #{e.message}" }
       return response_bad_request(content_type)
     end
 
