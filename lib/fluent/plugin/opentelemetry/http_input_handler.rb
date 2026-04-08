@@ -90,7 +90,7 @@ class Fluent::Plugin::Opentelemetry::HttpInputHandler
   end
 
   def response_unsupported_media_type
-    response(415, Fluent::Plugin::Opentelemetry::CONTENT_TYPE_PAIN, "415 unsupported media type, supported: [application/json, application/x-protobuf]")
+    response(415, Fluent::Plugin::Opentelemetry::CONTENT_TYPE_PLAIN, "415 unsupported media type, supported: [application/json, application/x-protobuf]")
   end
 
   def response_bad_request(content_type)
