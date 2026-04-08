@@ -5,7 +5,7 @@ require "openssl"
 
 module Fluent::Plugin::Opentelemetry
   CONTENT_TYPE = "Content-Type"
-  CONTENT_TYPE_PAIN = "text/plain"
+  CONTENT_TYPE_PLAIN = "text/plain"
   CONTENT_TYPE_PROTOBUF = "application/x-protobuf"
   CONTENT_TYPE_JSON = "application/json"
 
