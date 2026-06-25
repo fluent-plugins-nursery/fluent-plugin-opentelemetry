@@ -1,5 +1,11 @@
 ## [Unreleased]
 
+## [0.5.3] - 2026-06-25
+
+Fixes:
+
+- in_opentelemetry: enforce size limits on incoming payloads
+
 ## [0.5.2] - 2026-03-15
 
 Improvements:
