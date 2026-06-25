@@ -32,11 +32,15 @@ class Fluent::Plugin::OpentelemetryInputTest < Test::Unit::TestCase
       <http>
         bind 127.0.0.1
         port #{@port}
+        body_size_limit 12345
+        decompression_size_limit 123456
       </http>
     ])
     assert_equal "opentelemetry.test", d.instance.tag
     assert_equal "127.0.0.1", d.instance.http_config.bind
     assert_equal @port, d.instance.http_config.port
+    assert_equal 12345, d.instance.http_config.body_size_limit
+    assert_equal 123456, d.instance.http_config.decompression_size_limit
 
     if defined?(GRPC)
       d = create_driver(%[

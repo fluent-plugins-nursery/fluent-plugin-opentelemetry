@@ -65,10 +65,12 @@ Example:
 
 This requires to receive data via HTTP/HTTPS.
 
-| parameter | type    | description            | default   |
-|-----------|---------|------------------------|-----------|
-| bind      | string  | The address to bind to | `0.0.0.0` |
-| port      | integer | The port to listen to  | `4318`    |
+| parameter                | type    | description                                                                                                               | default   |
+|--------------------------|---------|---------------------------------------------------------------------------------------------------------------------------|-----------|
+| bind                     | string  | The address to bind to                                                                                                    | `0.0.0.0` |
+| port                     | integer | The port to listen to                                                                                                     | `4318`    |
+| body_size_limit          | size    | The size limit of the POSTed element. This value should be larger than the 'chunk_limit_size' in out_opentelemetry plugin | `32M` (32MiB)     |
+| decompression_size_limit | size    | The size limit of the decompressed element                                                                                | `256M`  (256MiB)   |
 
 #### `<grpc>` section
 

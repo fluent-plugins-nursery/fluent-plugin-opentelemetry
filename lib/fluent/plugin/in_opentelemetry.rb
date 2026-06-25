@@ -27,6 +27,11 @@ module Fluent::Plugin
       config_param :bind, :string, default: "0.0.0.0"
       desc "The port to listen to."
       config_param :port, :integer, default: 4318
+
+      desc "The size limit of the POSTed element. This value should be larger than the 'chunk_limit_size' in out_opentelemetry plugin."
+      config_param :body_size_limit, :size, default: 32 * 1024 * 1024
+      desc "The size limit of the decompressed element."
+      config_param :decompression_size_limit, :size, default: 256 * 1024 * 1024
     end
 
     config_section :grpc, required: false, multi: false, init: false, param_name: :grpc_config do

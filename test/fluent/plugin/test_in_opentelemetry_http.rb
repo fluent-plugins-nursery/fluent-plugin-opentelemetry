@@ -113,6 +113,74 @@ class Fluent::Plugin::OpentelemetryInputHttpTest < Test::Unit::TestCase
       assert_equal(expected_events, d.events)
     end
 
+    def test_body_size_limit
+      d = create_driver(<<~"CONFIG")
+        tag opentelemetry.test
+        <http>
+          bind 127.0.0.1
+          port #{@port}
+          body_size_limit #{TestData::JSON::LOGS.bytesize}
+        </http>
+      CONFIG
+
+      res = d.run(expect_records: 1) do
+        post_json("/v1/logs", TestData::JSON::LOGS)
+      end
+      expected_events = [["opentelemetry.test", @event_time, { "type" => "opentelemetry_logs", "message" => TestData::JSON::LOGS }]]
+      assert_equal(200, res.status)
+      assert_equal(expected_events, d.events)
+    end
+
+    def test_body_size_limit_too_large_payload
+      d = create_driver(<<~"CONFIG")
+        tag opentelemetry.test
+        <http>
+          bind 127.0.0.1
+          port #{@port}
+          body_size_limit #{TestData::JSON::LOGS.bytesize - 1}
+        </http>
+      CONFIG
+
+      res = d.run(expect_records: 0) do
+        post_json("/v1/logs", TestData::JSON::LOGS)
+      end
+      assert_equal(413, res.status)
+    end
+
+    def test_decompression_size_limit
+      d = create_driver(<<~"CONFIG")
+        tag opentelemetry.test
+        <http>
+          bind 127.0.0.1
+          port #{@port}
+          decompression_size_limit #{TestData::JSON::LOGS.bytesize}
+        </http>
+      CONFIG
+
+      res = d.run(expect_records: 1) do
+        post_json("/v1/logs", compress(TestData::JSON::LOGS), headers: { "Content-Encoding" => "gzip" })
+      end
+      expected_events = [["opentelemetry.test", @event_time, { "type" => "opentelemetry_logs", "message" => TestData::JSON::LOGS }]]
+      assert_equal(200, res.status)
+      assert_equal(expected_events, d.events)
+    end
+
+    def test_decompression_size_limit_too_large_payload
+      d = create_driver(<<~"CONFIG")
+        tag opentelemetry.test
+        <http>
+          bind 127.0.0.1
+          port #{@port}
+          decompression_size_limit #{TestData::JSON::LOGS.bytesize - 1}
+        </http>
+      CONFIG
+
+      res = d.run(expect_records: 0) do
+        post_json("/v1/logs", compress(TestData::JSON::LOGS), headers: { "Content-Encoding" => "gzip" })
+      end
+      assert_equal(413, res.status)
+    end
+
     data("metrics" => {
            request_path: "/v1/metrics",
            request_data: TestData::ProtocolBuffers::METRICS,
