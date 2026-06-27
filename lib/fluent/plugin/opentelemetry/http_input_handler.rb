@@ -119,6 +119,7 @@ class Fluent::Plugin::Opentelemetry::HttpInputHandler
   end
 
   BYTES_TO_READ = 64 * 1024
+  private_constant :BYTES_TO_READ
 
   def decompress(compressed_data, limit:)
     io = StringIO.new(compressed_data)
