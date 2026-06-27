@@ -1,5 +1,8 @@
 # fluent-plugin-opentelemetry
 
+[![Gem Version](https://badge.fury.io/rb/fluent-plugin-opentelemetry.svg)](https://badge.fury.io/rb/fluent-plugin-opentelemetry)
+[![Test](https://github.com/fluent-plugins-nursery/fluent-plugin-opentelemetry/actions/workflows/test.yml/badge.svg)](https://github.com/fluent-plugins-nursery/fluent-plugin-opentelemetry/actions/workflows/test.yml)
+
 [Fluentd](https://fluentd.org/) input/output plugin to forward [OpenTelemetry Protocol](https://github.com/open-telemetry/opentelemetry-proto) data.
 
 ## Installation
