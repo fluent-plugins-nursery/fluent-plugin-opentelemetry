@@ -28,7 +28,7 @@ class Fluent::Plugin::OpentelemetryInputHttpTest < Test::Unit::TestCase
 
   sub_test_case "HTTP" do
     def config
-      <<~"CONFIG"
+      <<~CONFIG
         tag opentelemetry.test
         <http>
           bind 127.0.0.1
@@ -114,7 +114,7 @@ class Fluent::Plugin::OpentelemetryInputHttpTest < Test::Unit::TestCase
     end
 
     def test_body_size_limit
-      d = create_driver(<<~"CONFIG")
+      d = create_driver(<<~CONFIG)
         tag opentelemetry.test
         <http>
           bind 127.0.0.1
@@ -132,7 +132,7 @@ class Fluent::Plugin::OpentelemetryInputHttpTest < Test::Unit::TestCase
     end
 
     def test_body_size_limit_too_large_payload
-      d = create_driver(<<~"CONFIG")
+      d = create_driver(<<~CONFIG)
         tag opentelemetry.test
         <http>
           bind 127.0.0.1
@@ -148,7 +148,7 @@ class Fluent::Plugin::OpentelemetryInputHttpTest < Test::Unit::TestCase
     end
 
     def test_decompression_size_limit
-      d = create_driver(<<~"CONFIG")
+      d = create_driver(<<~CONFIG)
         tag opentelemetry.test
         <http>
           bind 127.0.0.1
@@ -166,7 +166,7 @@ class Fluent::Plugin::OpentelemetryInputHttpTest < Test::Unit::TestCase
     end
 
     def test_decompression_size_limit_too_large_payload
-      d = create_driver(<<~"CONFIG")
+      d = create_driver(<<~CONFIG)
         tag opentelemetry.test
         <http>
           bind 127.0.0.1
@@ -270,7 +270,7 @@ class Fluent::Plugin::OpentelemetryInputHttpTest < Test::Unit::TestCase
 
   sub_test_case "HTTPS" do
     def config
-      <<~"CONFIG"
+      <<~CONFIG
         tag opentelemetry.test
         <http>
           bind 127.0.0.1

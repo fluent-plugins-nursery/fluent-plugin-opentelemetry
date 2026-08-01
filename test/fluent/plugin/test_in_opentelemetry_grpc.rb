@@ -68,7 +68,7 @@ if defined?(GRPC)
     end
 
     def config
-      <<~"CONFIG"
+      <<~CONFIG
         tag opentelemetry.test
         <grpc>
           bind 127.0.0.1

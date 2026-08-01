@@ -89,7 +89,7 @@ class Fluent::Plugin::OpentelemetryInputTest < Test::Unit::TestCase
 
   sub_test_case "Placeholder" do
     def config
-      <<~"CONFIG"
+      <<~CONFIG
         tag opentelemetry.${type}
         <http>
           bind 127.0.0.1

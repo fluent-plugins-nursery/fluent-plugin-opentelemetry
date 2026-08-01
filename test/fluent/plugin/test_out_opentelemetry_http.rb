@@ -83,7 +83,7 @@ class Fluent::Plugin::OpentelemetryOutputHttpTest < Test::Unit::TestCase
 
   sub_test_case "HTTP" do
     def config
-      <<~"CONFIG"
+      <<~CONFIG
         <http>
           endpoint "http://127.0.0.1:#{@port}"
         </http>
@@ -251,7 +251,7 @@ class Fluent::Plugin::OpentelemetryOutputHttpTest < Test::Unit::TestCase
 
   sub_test_case "HTTPS" do
     def config
-      <<~"CONFIG"
+      <<~CONFIG
         <http>
           endpoint "https://127.0.0.1:#{@port}"
         </http>
@@ -289,7 +289,7 @@ class Fluent::Plugin::OpentelemetryOutputHttpTest < Test::Unit::TestCase
 
   sub_test_case "Bulk Export (BatchProcessor)" do
     def config
-      <<~"CONFIG"
+      <<~CONFIG
         <http>
           endpoint "http://127.0.0.1:#{@port}"
         </http>

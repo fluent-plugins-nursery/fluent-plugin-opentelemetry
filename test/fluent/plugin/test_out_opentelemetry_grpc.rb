@@ -92,7 +92,7 @@ if defined?(GRPC)
     end
 
     def config
-      <<~"CONFIG"
+      <<~CONFIG
         <grpc>
           endpoint "127.0.0.1:#{@port}"
         </grpc>
@@ -135,7 +135,7 @@ if defined?(GRPC)
     def test_send_compressed_message
       event = { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_METRICS, "message" => TestData::JSON::METRICS }
 
-      d = create_driver <<~"CONFIG"
+      d = create_driver <<~CONFIG
         <grpc>
           endpoint "127.0.0.1:#{@port}"
           compress gzip
@@ -153,7 +153,7 @@ if defined?(GRPC)
     def test_timeout_raise_deadline_exceeded
       event = { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_METRICS, "message" => TestData::JSON::METRICS }
 
-      d = create_driver <<~"CONFIG"
+      d = create_driver <<~CONFIG
         <grpc>
           endpoint "127.0.0.1:#{@port}"
           timeout 1s
@@ -193,7 +193,7 @@ if defined?(GRPC)
           assert_equal 5_000, channel_args["grpc.keepalive_timeout_ms"]
         end
 
-        create_driver <<~"CONFIG"
+        create_driver <<~CONFIG
           <grpc>
             endpoint "127.0.0.1:#{@port}"
             keepalive_time 60
