@@ -90,7 +90,7 @@ module Fluent::Plugin
     end
 
     def write(chunk)
-      BatchProcessor.build_export_requests(chunk).each do |export_request|
+      BatchProcessor.build_export_requests(chunk, log).each do |export_request|
         if @grpc_handler
           @grpc_handler.export(export_request)
         else
@@ -106,22 +106,72 @@ module Fluent::Plugin
         Opentelemetry::RECORD_TYPE_TRACES => "resourceSpans"
       }.freeze
 
-      def self.build_export_requests(chunk)
+      class InvalidRecords
+        MAX_SAMPLE_BYTESIZE = 100
+        MAX_SAMPLES = 3
+        private_constant :MAX_SAMPLE_BYTESIZE, :MAX_SAMPLES
+
+        attr_reader :count
+
+        def initialize
+          @count = 0
+          @samples = []
+        end
+
+        def add(sample = nil)
+          @count += 1
+          return if sample.nil? || @samples.size >= MAX_SAMPLES
+
+          text = sample.byteslice(0, MAX_SAMPLE_BYTESIZE).scrub("")
+          @samples << text unless @samples.include?(text)
+        end
+
+        def to_s
+          @samples.empty? ? @count.to_s : "#{@count} (#{@samples.join(' | ')})"
+        end
+      end
+
+      def self.build_export_requests(chunk, logger)
         requests = {
           Opentelemetry::RECORD_TYPE_LOGS => {},
           Opentelemetry::RECORD_TYPE_METRICS => {},
           Opentelemetry::RECORD_TYPE_TRACES => {}
         }
+        invalid = Hash.new { |hash, key| hash[key] = InvalidRecords.new }
 
         chunk.each do |_, record| # rubocop:disable Style/HashEachMethods
           record_type = record["type"]
           resource_key = RESOURCE_KEY_MAP[record_type]
-          record["message"] = JSON.parse(record["message"])
-          resource_hash = record["message"][resource_key][0]["resource"].hash
+          unless resource_key
+            invalid["unknown type"].add(record_type.inspect)
+            next
+          end
+
+          begin
+            record["message"] = JSON.parse(record["message"])
+          rescue JSON::ParserError, TypeError => e
+            invalid["broken message"].add(e.message)
+            next
+          end
+
+          resources = record["message"][resource_key] if record["message"].is_a?(Hash)
+          unless resources.is_a?(Array) && resources.first.is_a?(Hash)
+            invalid["no #{resource_key}"].add
+            next
+          end
+
+          resource_hash = resources.first["resource"].hash
           if requests[record_type][resource_hash].nil?
             requests[record_type][resource_hash] = record
           else
-            requests[record_type][resource_hash]["message"][resource_key].concat(record["message"][resource_key])
+            requests[record_type][resource_hash]["message"][resource_key].concat(resources)
+          end
+        end
+
+        unless invalid.empty?
+          logger.warn do
+            details = invalid.map { |reason, records| "#{reason}=#{records}" }
+            "Skipped invalid records (total: #{invalid.values.sum(&:count)}): #{details.join(', ')}"
           end
         end
 
