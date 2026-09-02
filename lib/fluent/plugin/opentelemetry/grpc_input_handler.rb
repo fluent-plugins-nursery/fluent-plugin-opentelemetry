@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "fluent/plugin/opentelemetry/grpc_tls"
 require "fluent/plugin/opentelemetry/response"
 require "opentelemetry/proto/collector/logs/v1/logs_service_services_pb"
 require "opentelemetry/proto/collector/metrics/v1/metrics_service_services_pb"
@@ -49,14 +50,15 @@ module Fluent::Plugin::Opentelemetry
       end
     end
 
-    def initialize(grpc_config, logger)
+    def initialize(grpc_config, transport_config, logger)
       @grpc_config = grpc_config
       @logger = logger
+      @credentials = Fluent::Plugin::Opentelemetry::GrpcTLS.server_credentials(transport_config)
     end
 
     def run(logs:, metrics:, traces:)
       @server = GRPC::RpcServer.new(interceptors: [ExceptionInterceptor.new])
-      @server.add_http2_port("#{@grpc_config.bind}:#{@grpc_config.port}", :this_port_is_insecure)
+      @server.add_http2_port("#{@grpc_config.bind}:#{@grpc_config.port}", @credentials)
 
       logs_handler = ServiceHandler::Logs.new
       logs_handler.callback = lambda { |request|

@@ -8,6 +8,7 @@ require "opentelemetry/proto/collector/trace/v1/trace_service_pb"
 require "opentelemetry/proto/collector/trace/v1/trace_service_services_pb"
 
 require "fluent/plugin/opentelemetry/constant"
+require "fluent/plugin/opentelemetry/grpc_tls"
 require "google/protobuf"
 
 class Fluent::Plugin::Opentelemetry::GrpcOutputHandler
@@ -56,10 +57,11 @@ class Fluent::Plugin::Opentelemetry::GrpcOutputHandler
     channel_args["grpc.keepalive_time_ms"] = grpc_config.keepalive_time * 1000
     channel_args["grpc.keepalive_timeout_ms"] = grpc_config.keepalive_timeout * 1000
     channel_args["grpc.keepalive_permit_without_calls"] = 1
+    credentials = Fluent::Plugin::Opentelemetry::GrpcTLS.channel_credentials(@transport_config)
     @services = {
-      Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS => ServiceStub::Logs.new(@grpc_config.endpoint, :this_channel_is_insecure, channel_args: channel_args),
-      Fluent::Plugin::Opentelemetry::RECORD_TYPE_METRICS => ServiceStub::Metrics.new(@grpc_config.endpoint, :this_channel_is_insecure, channel_args: channel_args),
-      Fluent::Plugin::Opentelemetry::RECORD_TYPE_TRACES => ServiceStub::Traces.new(@grpc_config.endpoint, :this_channel_is_insecure, channel_args: channel_args)
+      Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS => ServiceStub::Logs.new(@grpc_config.endpoint, credentials, channel_args: channel_args),
+      Fluent::Plugin::Opentelemetry::RECORD_TYPE_METRICS => ServiceStub::Metrics.new(@grpc_config.endpoint, credentials, channel_args: channel_args),
+      Fluent::Plugin::Opentelemetry::RECORD_TYPE_TRACES => ServiceStub::Traces.new(@grpc_config.endpoint, credentials, channel_args: channel_args)
     }
   end
 

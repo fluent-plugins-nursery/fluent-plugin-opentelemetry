@@ -127,16 +127,178 @@ if defined?(GRPC)
       assert_equal(expected_events, d.events)
     end
 
-    def post_grpc(type, json_data, compress: false)
+    sub_test_case "TLS" do
+      def tls_config(client_cert_auth: false)
+        <<~CONFIG
+          tag opentelemetry.test
+          <grpc>
+            bind 127.0.0.1
+            port #{@port}
+          </grpc>
+          <transport tls>
+            ca_path #{cert_file_path('ca.crt')}
+            cert_path #{cert_file_path('server.crt')}
+            private_key_path #{cert_file_path('server.key')}
+            client_cert_auth #{client_cert_auth}
+          </transport>
+        CONFIG
+      end
+
+      def server_verifying_credentials
+        GRPC::Core::ChannelCredentials.new(File.read(cert_file_path("ca.crt")))
+      end
+
+      def client_certificate_credentials
+        GRPC::Core::ChannelCredentials.new(File.read(cert_file_path("ca.crt")),
+                                           File.read(cert_file_path("client.key")),
+                                           File.read(cert_file_path("client.crt")))
+      end
+
+      def expected_events
+        [["opentelemetry.test", @event_time, { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS, "message" => TestData::JSON::LOGS }]]
+      end
+
+      def test_receive_over_tls
+        d = create_driver(tls_config)
+        d.run(expect_records: 1) do
+          post_grpc(Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS, TestData::JSON::LOGS, credentials: server_verifying_credentials)
+        end
+
+        assert_equal(expected_events, d.events)
+      end
+
+      def test_receive_over_mutual_tls
+        d = create_driver(tls_config(client_cert_auth: true))
+        d.run(expect_records: 1) do
+          post_grpc(Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS, TestData::JSON::LOGS, credentials: client_certificate_credentials)
+        end
+
+        assert_equal(expected_events, d.events)
+      end
+
+      def test_reject_plaintext_client
+        d = create_driver(tls_config)
+
+        d.run(expect_records: 1, timeout: 20) do
+          post_grpc(Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS, TestData::JSON::LOGS, credentials: server_verifying_credentials)
+
+          assert_raise_kind_of(GRPC::BadStatus) do
+            post_grpc(Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS, TestData::JSON::LOGS)
+          end
+        end
+
+        assert_equal(expected_events, d.events)
+      end
+
+      def test_reject_client_without_certificate
+        d = create_driver(tls_config(client_cert_auth: true))
+
+        d.run(expect_records: 1, timeout: 20) do
+          post_grpc(Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS, TestData::JSON::LOGS, credentials: client_certificate_credentials)
+
+          assert_raise_kind_of(GRPC::BadStatus) do
+            post_grpc(Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS, TestData::JSON::LOGS, credentials: server_verifying_credentials)
+          end
+        end
+
+        assert_equal(expected_events, d.events)
+      end
+
+      def test_receive_over_tls_with_encrypted_private_key
+        d = create_driver(<<~CONFIG)
+          tag opentelemetry.test
+          <grpc>
+            bind 127.0.0.1
+            port #{@port}
+          </grpc>
+          <transport tls>
+            cert_path #{cert_file_path('server.crt')}
+            private_key_path #{cert_file_path('server-encrypted.key')}
+            private_key_passphrase fluentd
+          </transport>
+        CONFIG
+        d.run(expect_records: 1) do
+          post_grpc(Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS, TestData::JSON::LOGS, credentials: server_verifying_credentials)
+        end
+
+        assert_equal(expected_events, d.events)
+      end
+
+      def test_encrypted_private_key_without_passphrase
+        assert_raise(Fluent::ConfigError) do
+          create_driver(<<~CONFIG).instance_start
+            tag opentelemetry.test
+            <grpc>
+              bind 127.0.0.1
+              port #{@port}
+            </grpc>
+            <transport tls>
+              cert_path #{cert_file_path('server.crt')}
+              private_key_path #{cert_file_path('server-encrypted.key')}
+            </transport>
+          CONFIG
+        end
+      end
+
+      def test_unreadable_certificate
+        assert_raise(Fluent::ConfigError) do
+          create_driver(<<~CONFIG)
+            tag opentelemetry.test
+            <grpc>
+              bind 127.0.0.1
+              port #{@port}
+            </grpc>
+            <transport tls>
+              cert_path #{cert_file_path('server.crt')}
+              private_key_path #{cert_file_path('nonexistent.key')}
+            </transport>
+          CONFIG
+        end
+      end
+
+      def test_certificate_is_required
+        assert_raise(Fluent::ConfigError.new("<transport tls> cert_path and private_key_path are required when <grpc> is used")) do
+          create_driver(<<~CONFIG)
+            tag opentelemetry.test
+            <grpc>
+              bind 127.0.0.1
+              port #{@port}
+            </grpc>
+            <transport tls>
+              ca_path #{cert_file_path('ca.crt')}
+            </transport>
+          CONFIG
+        end
+      end
+
+      def test_client_cert_auth_requires_ca_path
+        assert_raise(Fluent::ConfigError.new("<transport tls> client_cert_auth requires ca_path when <grpc> is used")) do
+          create_driver(<<~CONFIG)
+            tag opentelemetry.test
+            <grpc>
+              bind 127.0.0.1
+              port #{@port}
+            </grpc>
+            <transport tls>
+              cert_path #{cert_file_path('server.crt')}
+              private_key_path #{cert_file_path('server.key')}
+              client_cert_auth true
+            </transport>
+          CONFIG
+        end
+      end
+    end
+
+    def post_grpc(type, json_data, compress: false, credentials: :this_channel_is_insecure)
       channel_args = compress ? GRPC::Core::CompressionOptions.new({ default_algorithm: :gzip }).to_channel_arg_hash : {}
       service =
         case type
         when Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS
-          ServiceStub::Logs.new("127.0.0.1:#{@port}", :this_channel_is_insecure, channel_args: channel_args)
+          ServiceStub::Logs.new("127.0.0.1:#{@port}", credentials, channel_args: channel_args)
         when Fluent::Plugin::Opentelemetry::RECORD_TYPE_METRICS
-          ServiceStub::Metrics.new("127.0.0.1:#{@port}", :this_channel_is_insecure, channel_args: channel_args)
+          ServiceStub::Metrics.new("127.0.0.1:#{@port}", credentials, channel_args: channel_args)
         when Fluent::Plugin::Opentelemetry::RECORD_TYPE_TRACES
-          ServiceStub::Traces.new("127.0.0.1:#{@port}", :this_channel_is_insecure, channel_args: channel_args)
+          ServiceStub::Traces.new("127.0.0.1:#{@port}", credentials, channel_args: channel_args)
         end
 
       service.export(json_data)

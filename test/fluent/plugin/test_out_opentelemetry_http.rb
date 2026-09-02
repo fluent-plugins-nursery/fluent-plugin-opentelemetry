@@ -271,8 +271,8 @@ class Fluent::Plugin::OpentelemetryOutputHttpTest < Test::Unit::TestCase
           endpoint "https://127.0.0.1:#{@port}"
         </http>
         <transport tls>
-          cert_path "#{File.expand_path(File.dirname(__FILE__) + '/../resources/certs/ca.crt')}"
-          private_key_path "#{File.expand_path(File.dirname(__FILE__) + '/../resources/certs/ca.key')}"
+          cert_path #{cert_file_path('ca.crt')}
+          private_key_path #{cert_file_path('ca.key')}
           insecure true
         </transport>
       CONFIG
