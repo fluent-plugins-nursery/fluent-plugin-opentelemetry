@@ -2,6 +2,7 @@
 
 require "fluent/plugin/input"
 require "fluent/plugin/opentelemetry/constant"
+require "fluent/plugin/opentelemetry/grpc_tls"
 require "fluent/plugin/opentelemetry/http_input_handler"
 require "fluent/plugin_helper/http_server"
 require "fluent/plugin_helper/thread"
@@ -57,6 +58,8 @@ module Fluent::Plugin
       unless [@http_config, @grpc_config].any?
         raise Fluent::ConfigError, "Please configure either <http> or <grpc> section, or both."
       end
+
+      Opentelemetry::GrpcTLS.validate_server!(@transport_config) if @grpc_config
     end
 
     def start
@@ -78,8 +81,8 @@ module Fluent::Plugin
       end
 
       if @grpc_config
+        @grpc_handler = Opentelemetry::GrpcInputHandler.new(@grpc_config, @transport_config, log)
         thread_create(:in_opentelemetry_grpc_server) do
-          @grpc_handler = Opentelemetry::GrpcInputHandler.new(@grpc_config, log)
           @grpc_handler.run(
             logs: lambda { |record|
               router.emit(tag_for(Opentelemetry::RECORD_TYPE_LOGS), Fluent::EventTime.now, { "type" => Opentelemetry::RECORD_TYPE_LOGS, "message" => record })

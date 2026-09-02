@@ -45,9 +45,13 @@ if defined?(GRPC)
       end
     end
 
+    def server_credentials
+      :this_port_is_insecure
+    end
+
     def run_grpc_server
       @grpc_server = GRPC::RpcServer.new
-      @grpc_server.add_http2_port("127.0.0.1:#{@port}", :this_port_is_insecure)
+      @grpc_server.add_http2_port("127.0.0.1:#{@port}", server_credentials)
 
       @log_service = LogService.new
       @grpc_server.handle(@log_service)
@@ -170,6 +174,73 @@ if defined?(GRPC)
       end
     ensure
       d.instance_shutdown
+    end
+
+    sub_test_case "TLS" do
+      def server_credentials
+        GRPC::Core::ServerCredentials.new(
+          File.read(cert_file_path("ca.crt")),
+          [{ private_key: File.read(cert_file_path("server.key")), cert_chain: File.read(cert_file_path("server.crt")) }],
+          true
+        )
+      end
+
+      def config
+        <<~CONFIG
+          <grpc>
+            endpoint "127.0.0.1:#{@port}"
+          </grpc>
+          <transport tls>
+            ca_path #{cert_file_path('ca.crt')}
+            cert_path #{cert_file_path('client.crt')}
+            private_key_path #{cert_file_path('client.key')}
+          </transport>
+        CONFIG
+      end
+
+      def test_send_logs_over_mutual_tls
+        event = { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS, "message" => TestData::JSON::LOGS }
+
+        d = create_driver
+        d.run(default_tag: "opentelemetry.test") do
+          d.feed(event)
+        end
+
+        assert_equal(TestData::JSON::LOGS, @log_service.received.to_json)
+      end
+    end
+
+    sub_test_case "TLS without client certificate" do
+      def server_credentials
+        GRPC::Core::ServerCredentials.new(
+          nil,
+          [{ private_key: File.read(cert_file_path("server.key")), cert_chain: File.read(cert_file_path("server.crt")) }],
+          false
+        )
+      end
+
+      def config
+        <<~CONFIG
+          <grpc>
+            endpoint "127.0.0.1:#{@port}"
+          </grpc>
+          <transport tls>
+            ca_path #{cert_file_path('ca.crt')}
+            insecure true
+          </transport>
+        CONFIG
+      end
+
+      def test_send_logs_verifying_server_only
+        event = { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS, "message" => TestData::JSON::LOGS }
+
+        d = create_driver
+        d.run(default_tag: "opentelemetry.test") do
+          d.feed(event)
+        end
+
+        assert_equal(TestData::JSON::LOGS, @log_service.received.to_json)
+      end
     end
 
     sub_test_case "gRPC keepalive settings" do

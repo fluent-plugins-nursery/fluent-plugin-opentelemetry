@@ -41,6 +41,10 @@ module TestData
   end
 end
 
+def cert_file_path(name)
+  File.expand_path("./fluent/resources/certs/#{name}", __dir__)
+end
+
 def unused_tcp_port(num = 1)
   ports = []
   sockets = []

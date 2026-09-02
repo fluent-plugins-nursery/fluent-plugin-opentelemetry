@@ -277,9 +277,9 @@ class Fluent::Plugin::OpentelemetryInputHttpTest < Test::Unit::TestCase
           port #{@port}
         </http>
         <transport tls>
-          ca_path "#{File.expand_path(File.dirname(__FILE__) + '/../resources/certs/ca.crt')}"
-          cert_path "#{File.expand_path(File.dirname(__FILE__) + '/../resources/certs/server.crt')}"
-          private_key_path "#{File.expand_path(File.dirname(__FILE__) + '/../resources/certs/server.key')}"
+          ca_path #{cert_file_path('ca.crt')}
+          cert_path #{cert_file_path('server.crt')}
+          private_key_path #{cert_file_path('server.key')}
           insecure true
         </transport>
       CONFIG
@@ -342,8 +342,8 @@ class Fluent::Plugin::OpentelemetryInputHttpTest < Test::Unit::TestCase
   def https_option
     Excon.defaults[:ssl_verify_peer] = false
     {
-      client_cert: File.expand_path(File.dirname(__FILE__) + "/../resources/certs/ca.crt"),
-      client_key: File.expand_path(File.dirname(__FILE__) + "/../resources/certs/ca.key")
+      client_cert: cert_file_path("ca.crt"),
+      client_key: cert_file_path("ca.key")
     }
   end
 end

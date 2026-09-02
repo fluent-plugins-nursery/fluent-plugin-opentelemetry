@@ -92,6 +92,11 @@ It needs to install `grpc` gem manually to use this feature.
 
 Refer [Config: Transport Section](https://docs.fluentd.org/configuration/transport-section)
 
+When the `<grpc>` section is configured, `<transport tls>` applies to the gRPC listener as well. gRPC uses `ca_path`, `cert_path`, `private_key_path`, `private_key_passphrase` and `client_cert_auth`, and the other TLS parameters have no effect on the gRPC listener. `client_cert_auth` requires `ca_path`, because gRPC has no default trust store for client certificates.
+
+> [!WARNING]
+> This changes the behavior of an existing configuration that has both `<transport tls>` and `<grpc>`. The gRPC listener used to accept plaintext regardless of `<transport tls>`, and it now requires TLS. Plaintext OTLP/gRPC clients have to be switched to TLS.
+
 #### Example
 
 ```
@@ -207,6 +212,7 @@ It needs to install `grpc` gem manually to use this feature.
 
 | parameter              | type    | description                                    | default |
 |------------------------|---------|------------------------------------------------|---------|
+| ca_path                | string  | Specifies the path of CA Certificate file used to verify the server. Applied to `<grpc>` only | `nil`   |
 | cert_path              | string  | Specifies the path of Certificate file         | `nil`   |
 | private_key_path       | string  | Specifies the path of Private Key file         | `nil`   |
 | private_key_passphrase | string  | Specifies the public CA private key passphrase | `nil`   |
@@ -217,6 +223,11 @@ It needs to install `grpc` gem manually to use this feature.
 | max_version | enum | The endpoint for HTTP/HTTPS request                         | `TLS1_1` / `TLS1_2` / `TLS1_3` | `nil`   |
 
 Refer [Config: Transport Section](https://docs.fluentd.org/configuration/transport-section)
+
+When the `<grpc>` section is configured, `<transport tls>` applies to the gRPC connection as well. gRPC uses `ca_path`, `cert_path`, `private_key_path` and `private_key_passphrase`, and the other TLS parameters have no effect on the gRPC connection. Fluentd rejects a `<transport tls>` section that configures no certificate at all, so pair `ca_path` with `insecure true` to verify the server without presenting a client certificate. `insecure` does not weaken the gRPC connection: the server certificate is verified against `ca_path`, or against the default root certificates of gRPC when `ca_path` is omitted.
+
+> [!WARNING]
+> This changes the behavior of an existing configuration that has both `<transport tls>` and `<grpc>`. The gRPC connection used to be plaintext regardless of `<transport tls>`, and it now uses TLS, so the collector has to accept it.
 
 #### `<buffer>` section
 
