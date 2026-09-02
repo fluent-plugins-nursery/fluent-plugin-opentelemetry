@@ -104,6 +104,21 @@ class Fluent::Plugin::OpentelemetryOutputHttpTest < Test::Unit::TestCase
       assert_equal(TestData::ProtocolBuffers::LOGS, server_request.body)
     end
 
+    def test_send_logs_with_invalid_record_in_same_chunk
+      d = create_driver
+      d.run(default_tag: "opentelemetry.test", shutdown: false) do
+        d.feed({ "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS, "message" => "{}" })
+        d.feed({ "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS, "message" => TestData::JSON::LOGS })
+      end
+
+      assert_equal(1, server_requests.size)
+      assert_equal("/v1/logs", server_request.path)
+      assert_equal(TestData::ProtocolBuffers::LOGS, server_request.body)
+      assert_include(d.instance.log.out.logs.join, "no resourceLogs=1")
+    ensure
+      d.instance_shutdown
+    end
+
     def test_send_metrics
       event = { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_METRICS, "message" => TestData::JSON::METRICS }
 
