@@ -19,6 +19,7 @@ class Fluent::Plugin::Opentelemetry::HttpOutputHandler
       tls_settings[:client_cert] = @transport_config.cert_path
       tls_settings[:client_key] = @transport_config.private_key_path
       tls_settings[:client_key_pass] = @transport_config.private_key_passphrase
+      tls_settings[:ssl_ca_file] = @transport_config.ca_path unless @transport_config.ca_path.to_s.empty?
       tls_settings[:ssl_min_version] = Fluent::Plugin::Opentelemetry::TLS_VERSIONS_MAP[@transport_config.min_version]
       tls_settings[:ssl_max_version] = Fluent::Plugin::Opentelemetry::TLS_VERSIONS_MAP[@transport_config.max_version]
     end
@@ -29,7 +30,7 @@ class Fluent::Plugin::Opentelemetry::HttpOutputHandler
       connect_timeout: http_config.connect_timeout
     }
 
-    Excon.defaults[:ssl_verify_peer] = false if @transport_config.insecure
+    tls_settings[:ssl_verify_peer] = false if @transport_config.insecure && tls_settings[:ssl_ca_file].nil?
     @connections = {
       Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS => Excon.new(http_logs_endpoint, proxy: @http_config.proxy, persistent: true, **tls_settings, **timeout_settings),
       Fluent::Plugin::Opentelemetry::RECORD_TYPE_METRICS => Excon.new(http_metrics_endpoint, proxy: @http_config.proxy, persistent: true, **tls_settings, **timeout_settings),

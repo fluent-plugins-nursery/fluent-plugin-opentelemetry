@@ -33,6 +33,22 @@ class Fluent::Plugin::OpentelemetryOutputHttpTest < Test::Unit::TestCase
     config
   end
 
+  def self_signed_server_config(config)
+    config[:Port] = @port.to_s
+    config[:SSLEnable] = true
+    # WEBrick supports self-generated self-signed certificate
+    config[:SSLCertName] = [["CN", WEBrick::Utils.getservername]]
+    config
+  end
+
+  def ca_signed_server_config(config)
+    config[:Port] = @port.to_s
+    config[:SSLEnable] = true
+    config[:SSLCertificate] = OpenSSL::X509::Certificate.new(File.read(cert_file_path("server.crt")))
+    config[:SSLPrivateKey] = OpenSSL::PKey.read(File.read(cert_file_path("server.key")))
+    config
+  end
+
   def run_http_server
     server = ::WEBrick::HTTPServer.new(server_config)
     server.mount_proc("/v1/metrics") do |req, res|
@@ -279,12 +295,7 @@ class Fluent::Plugin::OpentelemetryOutputHttpTest < Test::Unit::TestCase
     end
 
     def server_config
-      config = super
-      config[:Port] = @port.to_s
-      # WEBrick supports self-generated self-signed certificate
-      config[:SSLEnable] = true
-      config[:SSLCertName] = [["CN", WEBrick::Utils.getservername]]
-      config
+      self_signed_server_config(super)
     end
 
     def test_https_send_logs
@@ -298,6 +309,128 @@ class Fluent::Plugin::OpentelemetryOutputHttpTest < Test::Unit::TestCase
       assert_equal("/v1/logs", server_request.path)
       assert_equal("POST", server_request.request_method)
       assert_equal(["application/x-protobuf"], server_request.header["content-type"])
+      assert_equal(TestData::ProtocolBuffers::LOGS, server_request.body)
+    end
+  end
+
+  sub_test_case "HTTPS with ca_path" do
+    def config
+      <<~CONFIG
+        <http>
+          endpoint "https://127.0.0.1:#{@port}"
+        </http>
+        <transport tls>
+          ca_path #{cert_file_path('ca.crt')}
+          insecure true
+        </transport>
+      CONFIG
+    end
+
+    def server_config
+      ca_signed_server_config(super)
+    end
+
+    def test_verify_server_certificate_with_ca_path
+      event = { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS, "message" => TestData::JSON::LOGS }
+
+      d = create_driver
+      d.run(default_tag: "opentelemetry.test") do
+        d.feed(event)
+      end
+
+      assert_equal("/v1/logs", server_request.path)
+      assert_equal(TestData::ProtocolBuffers::LOGS, server_request.body)
+    end
+  end
+
+  sub_test_case "HTTPS with ca_path and client certificate" do
+    def config
+      <<~CONFIG
+        <http>
+          endpoint "https://127.0.0.1:#{@port}"
+        </http>
+        <transport tls>
+          ca_path #{cert_file_path('ca.crt')}
+          cert_path #{cert_file_path('client.crt')}
+          private_key_path #{cert_file_path('client.key')}
+        </transport>
+      CONFIG
+    end
+
+    def server_config
+      config = ca_signed_server_config(super)
+      config[:SSLCACertificateFile] = cert_file_path("ca.crt")
+      config[:SSLVerifyClient] = OpenSSL::SSL::VERIFY_PEER | OpenSSL::SSL::VERIFY_FAIL_IF_NO_PEER_CERT
+      config
+    end
+
+    def test_verify_server_certificate_with_client_certificate
+      event = { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS, "message" => TestData::JSON::LOGS }
+
+      d = create_driver
+      d.run(default_tag: "opentelemetry.test") do
+        d.feed(event)
+      end
+
+      assert_equal("/v1/logs", server_request.path)
+      assert_equal(TestData::ProtocolBuffers::LOGS, server_request.body)
+    end
+  end
+
+  sub_test_case "HTTPS with ca_path and untrusted server" do
+    def config
+      <<~CONFIG
+        <http>
+          endpoint "https://127.0.0.1:#{@port}"
+        </http>
+        <transport tls>
+          ca_path #{cert_file_path('ca.crt')}
+          insecure true
+        </transport>
+      CONFIG
+    end
+
+    def server_config
+      self_signed_server_config(super)
+    end
+
+    def test_reject_server_certificate_not_signed_by_ca_path
+      old_report_on_exception = Thread.report_on_exception
+      Thread.report_on_exception = false
+
+      event = { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS, "message" => TestData::JSON::LOGS }
+
+      d = create_driver
+      error = assert_raise_kind_of(Excon::Error::Socket) do
+        d.run(default_tag: "opentelemetry.test", shutdown: false) do
+          d.feed(event)
+        end
+      end
+
+      assert_include(error.message, "certificate verify failed")
+      assert_equal(0, server_requests.size)
+    ensure
+      d&.instance_shutdown
+      Thread.report_on_exception = old_report_on_exception
+    end
+
+    def test_insecure_skips_verification_without_transport_tls_argument
+      event = { "type" => Fluent::Plugin::Opentelemetry::RECORD_TYPE_LOGS, "message" => TestData::JSON::LOGS }
+
+      d = create_driver(<<~CONFIG)
+        <http>
+          endpoint "https://127.0.0.1:#{@port}"
+        </http>
+        <transport>
+          ca_path #{cert_file_path('ca.crt')}
+          insecure true
+        </transport>
+      CONFIG
+      d.run(default_tag: "opentelemetry.test") do
+        d.feed(event)
+      end
+
+      assert_equal("/v1/logs", server_request.path)
       assert_equal(TestData::ProtocolBuffers::LOGS, server_request.body)
     end
   end
