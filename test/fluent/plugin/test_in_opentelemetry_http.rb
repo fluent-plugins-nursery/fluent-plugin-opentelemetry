@@ -324,9 +324,9 @@ class Fluent::Plugin::OpentelemetryInputHttpTest < Test::Unit::TestCase
     post(path, json, headers: headers, options: options)
   end
 
-  def post_https_protobuf(path, binary, headers: {}, options: {})
+  def post_https_protobuf(path, binary, headers: {})
     headers = headers.merge({ "Content-Type" => "application/x-protobuf" })
-    post(path, binary, endpoint: "https://127.0.0.1:#{@port}", headers: headers, options: options)
+    post(path, binary, endpoint: "https://127.0.0.1:#{@port}", headers: headers, options: https_option)
   end
 
   def post_protobuf(path, binary, headers: {}, options: {})
@@ -340,10 +340,10 @@ class Fluent::Plugin::OpentelemetryInputHttpTest < Test::Unit::TestCase
   end
 
   def https_option
-    Excon.defaults[:ssl_verify_peer] = false
     {
       client_cert: cert_file_path("ca.crt"),
-      client_key: cert_file_path("ca.key")
+      client_key: cert_file_path("ca.key"),
+      ssl_verify_peer: false
     }
   end
 end
