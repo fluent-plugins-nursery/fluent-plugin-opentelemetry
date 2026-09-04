@@ -3,7 +3,7 @@
 module Fluent
   module Plugin
     module Opentelemetry
-      VERSION = "0.5.3"
+      VERSION = "0.5.4"
     end
   end
 end

@@ -1,5 +1,13 @@
 ## [Unreleased]
 
+## [0.5.4] - 2026-09-04
+
+Fixes:
+
+- Apply <transport tls> ca_path to HTTP connections (#55)
+- Apply <transport tls> settings to gRPC connections (#54)
+- out_opentelemetry: skip invalid records instead of failing the chunk (#53)
+
 ## [0.5.3] - 2026-06-25
 
 Fixes:
