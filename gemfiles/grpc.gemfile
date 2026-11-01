@@ -4,4 +4,12 @@
 eval_gemfile("../Gemfile")
 
 # Add custom dependencies
-gem "grpc"
+if Gem.win_platform?
+  # grpc 1.85.0 does not ship a prebuilt x64-mingw-ucrt gem.
+  # Bundler then picks the source gem, and it fails to build on Windows.
+  # Remove this pin once a grpc release after 1.84 ships an x64-mingw-ucrt gem again.
+  # See https://github.com/grpc/grpc/issues/43374
+  gem "grpc", "< 1.85"
+else
+  gem "grpc"
+end
